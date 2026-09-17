@@ -8,6 +8,7 @@ from conduit_sentinel.pipeline import run, write_outputs
 OUTPUT_FILES = {
     "obs_qc.csv",
     "gaps.csv",
+    "rule_hits.csv",
     "obs_hourly.csv",
     "channel_status_daily.csv",
     "health_daily.csv",

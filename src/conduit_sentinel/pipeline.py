@@ -56,6 +56,7 @@ def write_outputs(result: SentinelRun, out_dir: str | Path) -> list[Path]:
     tables = {
         "obs_qc.csv": result.qc.obs,
         "gaps.csv": result.qc.gaps,
+        "rule_hits.csv": result.qc.rule_hits,
         "obs_hourly.csv": result.hourly,
         "channel_status_daily.csv": result.group_status,
         "health_daily.csv": result.health,
