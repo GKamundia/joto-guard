@@ -72,6 +72,18 @@ python -m conduit_sentinel data/raw/organiser --out data/processed
 | `audit_results.csv` | checks of the firmware wet bulb, heat index and WBGT, and thermometer agreement |
 | `report.json` | the Station Health Report payload |
 
+Serve the report and open the Station Health Report page:
+
+```bash
+uvicorn api.app:app --reload
+```
+
+```bash
+cd web && npm install && npm run dev
+```
+
+The API is then on http://127.0.0.1:8000 (documentation at `/docs`) and the page on http://localhost:5173. The page reads `GET /v1/station-health` and holds no numbers of its own; `src/api/README.md` lists the other endpoints.
+
 Tests and lint:
 
 ```bash
@@ -79,7 +91,7 @@ pytest
 ruff check src tests && ruff format --check src tests
 ```
 
-_TBD: API, web app and bot._
+_TBD: Telegram bot._
 
 ## 10. Data sources
 
