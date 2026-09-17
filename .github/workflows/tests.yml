@@ -26,7 +26,6 @@ jobs:
       - name: Test
         run: pytest
 
-
   web:
     runs-on: ubuntu-latest
     steps:
