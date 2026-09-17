@@ -110,3 +110,20 @@ def test_is_night_wraps_past_midnight():
     hours = pd.Series(range(24))
     assert hours[is_night(hours, 19, 5)].tolist() == [0, 1, 2, 3, 4, 5, 19, 20, 21, 22, 23]
     assert hours[is_night(hours, 1, 4)].tolist() == [1, 2, 3, 4]
+
+
+def test_thermometer_offset_is_reported_with_its_sign(make_obs, config):
+    audits = audits_for(make_obs(n=4, t_sht_c=21.0, t_mcp_c=20.5, t_bmx_c=20.5), config)
+
+    assert metric(audits, "A05", "mean_signed_diff_c", "t_sht_c-t_mcp_c")["value"] == 0.5
+    assert metric(audits, "A05", "mean_signed_diff_c", "t_bmx_c-t_mcp_c")["value"] == 0.0
+
+
+def test_audits_without_usable_rows_say_so(make_obs, config):
+    audits = audits_for(make_obs(n=3, t_sht_c=np.nan), config)
+
+    assert metric(audits, "A02", "mae_c")["verdict"] == "no usable rows"
+    assert (
+        metric(audits, "A05", "mean_abs_diff_c", "t_sht_c-t_mcp_c")["verdict"] == "no usable rows"
+    )
+    assert metric(audits, "A05", "mean_abs_diff_c", "t_bmx_c-t_mcp_c")["verdict"] == "report only"

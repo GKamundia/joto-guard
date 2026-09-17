@@ -151,7 +151,7 @@ Weights (10, 2, 14.4) and the 5 % share come from config. The report must print 
 | A02 | Firmware heat index vs NWS Rothfusz heat index | MAE; note the NWS formula is designed for hot conditions | Report only |
 | A03 | Firmware WBGT vs firmware wet bulb | Share of rows where WBGT < wet bulb, split day and night (night = 19:00 to 05:59 EAT) | "non-standard" if the share is above 1 % |
 | A04 | Firmware WBGT vs a standards-grade estimate | Liljegren et al. (2008) via `pywbgt`, or `thermofeel`, or the Dimiceli approximation; needs calibrated solar input, so it waits for light calibration | Report difference by hour of day |
-| A05 | Thermometer agreement | Pairwise mean and max absolute differences | Report only |
+| A05 | Thermometer agreement | Pairwise mean and max absolute differences, plus the mean signed difference (first minus second) so a systematic offset shows | Report only |
 
 A04 depends on converting light counts to irradiance, which belongs to the application layer; stub it until then.
 

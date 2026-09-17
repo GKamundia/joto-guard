@@ -109,10 +109,12 @@ def audit_thermometers(obs_qc: pd.DataFrame) -> list[dict]:
         if rows.empty:
             results += _results("A05", pair, [("mean_abs_diff_c", None, 0)], NO_DATA, "")
             continue
-        diff = (rows[first] - rows[second]).abs()
+        difference = rows[first] - rows[second]
         metrics = [
-            ("mean_abs_diff_c", round(diff.mean(), 3), len(rows)),
-            ("max_abs_diff_c", round(diff.max(), 3), len(rows)),
+            ("mean_abs_diff_c", round(difference.abs().mean(), 3), len(rows)),
+            ("max_abs_diff_c", round(difference.abs().max(), 3), len(rows)),
+            # signed, so a thermometer that reads consistently warm is visible
+            ("mean_signed_diff_c", round(difference.mean(), 3), len(rows)),
         ]
         results += _results("A05", pair, metrics, REPORT_ONLY, "")
     return results
