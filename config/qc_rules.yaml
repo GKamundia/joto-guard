@@ -1,0 +1,47 @@
+# Conduit Sentinel thresholds and weights.
+# Rule ids and defaults follow docs/SENTINEL_SPEC.md sections 6 (QC rules) and 8 (health score).
+# Change a value here only after the team agrees; the acceptance tests use these defaults.
+
+station:
+  expected_interval_s: 60
+  display_timezone: Africa/Nairobi
+
+# Plausible ranges as [min, max]. Values below min or above max are flagged bad.
+ranges:
+  temperature_c: [-5.0, 45.0]   # R01
+  humidity_pct: [0.0, 100.0]    # R02, where 0 % itself is also bad
+  pressure_hpa: [800.0, 900.0]  # R03, station pressure at 1523 m
+  wind_speed_ms: [0.0, 60.0]    # R04
+  wind_gust_ms: [0.0, 75.0]     # R04
+  rain_mm: [0.0, 10.0]          # R05, per observation
+
+qc:
+  light_dark_floor_counts: 240  # R06
+  max_step_c_per_min: 5.0       # R07
+  step_max_interval_s: 120      # R07
+  flat_line_rows:               # R08 (t_sht_c, rh_pct), R08b (pressure), R08c (wind, zeros excluded)
+    t_sht_c: 120
+    rh_pct: 120
+    p_station_hpa: 180
+    wind_speed_ms: 180
+  max_thermometer_spread_c: 2.0 # R09
+  rain_disagreement_mm: 0.4     # R11
+  duplicate_column_share: 0.99  # R13
+  late_interval_s: 120          # R14, late when 120 <= interval <= 300
+  gap_interval_s: 300           # R14, gap when interval > 300
+
+health:
+  bad_group_penalty: 10
+  suspect_group_penalty: 2
+  missing_minutes_per_point: 14.4  # 1 % of a day
+  max_flagged_share: 0.05
+
+hourly:
+  min_coverage_pct: 50           # observations in the hour, against the expected count
+  min_variable_coverage_pct: 50  # usable (flag 0 or 1) values of each variable in the hour
+
+audit:
+  stull_max_mae_c: 0.1                 # A01
+  wbgt_below_wet_bulb_max_share: 0.01  # A03
+  night_start_hour: 19                 # A03, local time, inclusive
+  night_end_hour: 5                    # A03, local time, inclusive
