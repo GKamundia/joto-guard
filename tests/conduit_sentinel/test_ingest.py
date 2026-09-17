@@ -19,7 +19,9 @@ def test_read_geocsv_splits_metadata_from_data(fixtures_dir):
 
     assert metadata["sensor_id"] == "61"
     assert metadata["measurements in file"] == "144"
-    assert metadata["creation_date"] == "2026-09-02T10:15:00Z"
+    assert metadata["creation_date"] == "2026-09-02 08:29:51 +0000"
+    assert metadata["doi"] == "https://doi.org/10.5065/d6v1236q"
+    assert metadata["delimiter"] == ","
     assert frame.shape == (6, 26)
     assert frame.loc[0, "Time"] == "2026-08-28T00:00:25Z"
     assert frame.loc[0, "Battery Voltage"] == ""
@@ -31,12 +33,14 @@ def test_station_metadata_is_parsed(fixtures_dir):
 
     assert station.station_id == 61
     assert station.name == "Kenya Kiambu JKUAT IOT AWS - Conduti@Empathy1"
+    assert station.site == "Site JKUAT"
+    # the header gives elevation as "1523.0 meters"
     assert (station.latitude, station.longitude, station.elevation_m) == (
         -1.099736,
         37.014528,
         1523.0,
     )
-    assert station.doi == "10.5065/d6v1236q"
+    assert station.doi == "https://doi.org/10.5065/d6v1236q"
 
 
 def test_station_metadata_without_sensor_id_is_an_error():
@@ -81,7 +85,7 @@ def test_overlapping_files_keep_each_timestamp_once(fixtures_dir):
 
 
 def test_duplicates_with_different_values_are_counted(fixtures_dir, tmp_path):
-    row = "2026-08-28T00:04:27Z,0,,3,100.0,0.0,0,0.0,0,0.0,0,12.2,"
+    row = "2026-08-28T00:04:27Z,0,,3,100,0,0,0,0,0,0,12.2,"
     changed = write_variant(
         fixtures_dir / "conduit_part_b.csv",
         tmp_path / "changed.csv",
