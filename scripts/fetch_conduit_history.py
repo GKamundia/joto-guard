@@ -5,15 +5,16 @@ fetch_conduit_history.py
 Data-preparation helper for Hack The Weather 2026.
 
 Pulls the full observation history of one or more instruments from the UCAR
-3D-PAWS FEWS NET CHORDS portal (3d-fewsnet.icdp.ucar.edu) in monthly chunks,
-parses the GeoCSV comment header, and writes one CSV per chunk plus a single
-concatenated file per instrument.
+3D-PAWS FEWS NET CHORDS portal (3d-fewsnet.icdp.ucar.edu) in monthly chunks and
+saves each chunk as the portal sent it, GeoCSV header and all, so that
+`python -m conduit_sentinel <folder>` can read the station metadata from it.
 
 The Conduit@Empathy1 station at JKUAT is instrument 61.
 
-Credentials: register at http://3d-fewsnet.icdp.ucar.edu/users/sign_up
-(the portal is HTTP-only; use a throwaway password), then copy the API key
-from your profile page and export:
+Credentials: register at https://3d-fewsnet.icdp.ucar.edu/users/sign_up, then
+copy the API key from your profile page and export it. New accounts start as
+"guest": a portal admin has to grant "Registered User" and "Data Downloader"
+first, or every request comes back as HTTP 406.
 
     export CHORDS_EMAIL="you@example.com"
     export CHORDS_API_KEY="xxxxxxxxxxxxxxxx"
@@ -70,7 +71,7 @@ def parse_geocsv(text: str) -> tuple[dict, pd.DataFrame]:
 
 
 def fetch_chunk(instrument: int, start: date, end: date, email: str, api_key: str,
-                session: requests.Session, retries: int = 3) -> tuple[dict, pd.DataFrame]:
+                session: requests.Session, retries: int = 3) -> tuple[dict, pd.DataFrame, str]:
     params = {
         "start": f"{start.isoformat()}T00:00",
         "end": f"{end.isoformat()}T00:00",
@@ -89,7 +90,8 @@ def fetch_chunk(instrument: int, start: date, end: date, email: str, api_key: st
                         "HTTP 406: the portal requires a valid email + api_key pair. "
                         "Check CHORDS_EMAIL / CHORDS_API_KEY.")
                 r.raise_for_status()
-                return parse_geocsv(r.text)
+                meta, df = parse_geocsv(r.text)
+                return meta, df, r.text
             except PermissionError:
                 raise
             except Exception as e:  # network or 5xx: back off and retry
@@ -118,35 +120,32 @@ def main() -> int:
     session = requests.Session()
 
     for inst in args.instrument:
-        frames, meta_seen = [], {}
+        written, rows_total, meta_seen = [], 0, {}
         for cs, ce in month_chunks(args.start, args.end):
             fn = args.out / f"instrument_{inst}_{cs.isoformat()}_{ce.isoformat()}.csv"
             if args.skip_existing and fn.exists():
-                df = pd.read_csv(fn, parse_dates=["Time"])
+                meta, df = parse_geocsv(fn.read_text(encoding="utf-8"))
                 print(f"[{inst}] {cs} .. {ce}: cached {len(df):>7} rows")
-                frames.append(df)
+                meta_seen = meta or meta_seen
+                written.append(fn)
+                rows_total += len(df)
                 continue
-            meta, df = fetch_chunk(inst, cs, ce, email, api_key, session)
+            meta, df, text = fetch_chunk(inst, cs, ce, email, api_key, session)
             meta_seen = meta or meta_seen
             print(f"[{inst}] {cs} .. {ce}: {len(df):>7} rows")
             if not df.empty:
-                df.to_csv(fn, index=False)
-                frames.append(df)
+                # Keep the GeoCSV exactly as the portal sent it: conduit_sentinel reads the
+                # "# key: value" header for the station's id, position and measurement count.
+                fn.write_text(text, encoding="utf-8")
+                written.append(fn)
+                rows_total += len(df)
             time.sleep(args.sleep)
 
-        if not frames:
+        if not written:
             print(f"[{inst}] no data returned", file=sys.stderr)
             continue
-        allv = (pd.concat(frames, ignore_index=True)
-                  .drop_duplicates(subset="Time")
-                  .sort_values("Time")
-                  .reset_index(drop=True))
-        out_all = args.out / f"instrument_{inst}_all.csv"
-        allv.to_csv(out_all, index=False)
-        (args.out / f"instrument_{inst}_meta.txt").write_text(
-            "\n".join(f"{k}: {v}" for k, v in meta_seen.items()) + "\n")
-        span = f"{allv['Time'].min()} -> {allv['Time'].max()}" if "Time" in allv else "n/a"
-        print(f"[{inst}] wrote {out_all} ({len(allv):,} rows, {span})")
+        print(f"[{inst}] wrote {len(written)} files to {args.out} ({rows_total:,} rows in total)")
+        print(f"[{inst}] quality-control them with: python -m conduit_sentinel {args.out}")
         if meta_seen:
             print(f"[{inst}] instrument: {meta_seen.get('instrument_name', '?')} "
                   f"lat {meta_seen.get('data collection latitude', '?')} "
