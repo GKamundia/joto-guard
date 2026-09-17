@@ -41,10 +41,15 @@ SECTIONS = [
 
 
 def report_for(obs, config):
-    ingested = IngestResult(
-        obs=obs, station=STATION, files=(), duplicates_removed=0, conflicting_duplicates=0
-    )
     qc = apply_qc(obs, config)
+    ingested = IngestResult(
+        obs=obs,
+        station=STATION,
+        files=(),
+        coverage=qc.coverage,
+        duplicates_removed=0,
+        conflicting_duplicates=0,
+    )
     status = group_status(qc, config)
     health = health_daily(qc, status, config)
     audits = run_audits(qc.obs, config)

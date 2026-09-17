@@ -33,7 +33,7 @@ def run(
     paths: Iterable[str | Path], config: Config, *, generated_at: datetime | None = None
 ) -> SentinelRun:
     ingested = ingest(paths)
-    qc = apply_qc(ingested.obs, config)
+    qc = apply_qc(ingested.obs, config, ingested.coverage)
     status = group_status(qc, config)
     health = health_daily(qc, status, config)
     audits = run_audits(qc.obs, config)

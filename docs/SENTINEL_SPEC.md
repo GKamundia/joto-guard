@@ -1,8 +1,10 @@
 # Conduit Sentinel: specification
 
-Version 0.2, 17 Sep 2026. This is the build contract for `src/conduit_sentinel/`. Every expected value in section 11 was computed from the two organiser CSVs; if an implementation disagrees, check the implementation first, then raise it with the team.
+Version 0.3, 17 Sep 2026. This is the build contract for `src/conduit_sentinel/`. Every expected value in section 11 was computed from the two organiser CSVs; if an implementation disagrees, check the implementation first, then raise it with the team.
 
-Changes from 0.1 (same day, see `decisions/0004-spec-corrections-from-implementation.md`): the late-interval count in section 11 is 22, not 21; missing minutes are charged to the days they fall in, and days without observations get a health row; the hourly, R11 and `qc_notes` rules are stated precisely; two supporting tables (`rule_hits`, `channel_status_daily`) are added.
+Changes in 0.3 (see `decisions/0005-days-outside-the-exports.md`): coverage windows tell "the station missed reports" apart from "these days were never exported", so `gaps` gains a `kind` column, `health_daily` covers only days an export reaches, and the cadence figures ignore the space between exports.
+
+Changes in 0.2 (see `decisions/0004-spec-corrections-from-implementation.md`): the late-interval count in section 11 is 22, not 21; missing minutes are charged to the days they fall in, and days without observations get a health row; the hourly, R11 and `qc_notes` rules are stated precisely; two supporting tables (`rule_hits`, `channel_status_daily`) are added.
 
 ## 1. Purpose and scope
 
@@ -62,11 +64,13 @@ The `_fw` suffix marks values computed by the station firmware, so nobody confus
 
 **`obs_qc`**: `obs_raw` plus one `qc_<variable>` column per variable (int flag, section 7), plus `qc_notes` (semicolon-separated rule ids that fired on that row, sorted, each once). A null value is always flagged 3. Daily rules (R11, R12, R13) note every row of the day they fire on, so every non-zero flag on a row is explained in its notes.
 
-**`gaps`**: `station_id`, `gap_start_utc` (last observation before the gap), `gap_end_utc` (first after), `interval_s`, `missing_minutes` = (interval_s − 60) / 60.
+**`gaps`**: `station_id`, `gap_start_utc` (last observation before the gap), `gap_end_utc` (first after), `interval_s`, `missing_minutes` = (interval_s − 60) / 60, `kind`. `kind` is `reporting` when the gap sits inside one coverage window, meaning the station missed reports, and `between_exports` when it runs from one window to the next, meaning nobody exported those days. Only reporting gaps count towards the health score and the cadence figures.
+
+**Coverage windows**: the periods the input files claim to cover, taken from each file's first and last observation, with overlapping files merged. `ingest` returns them and `apply_qc` carries them into `QCResult`. They separate "the station missed reports" from "these days were never exported": with a single continuous export the two are the same thing.
 
 **`obs_hourly`**: `station_id`, `hour_utc`, `n_obs`, `coverage_pct` = n_obs / 60 × 100, then one column per variable under its canonical name: the mean over rows flagged 0 or 1 for continuous variables, the circular (unit-vector) mean for `wind_dir_deg`, the maximum for `wind_gust_ms`, and the sum for `rain1_mm` and `rain2_mm`. Device codes, the station's running rain totals and `wind_gust_dir_deg` are not aggregated. Every hour from the first to the last observation has a row, including hours without data. A value is null when `coverage_pct` is below 50, or when the variable's usable (flag 0 or 1) values cover less than 50 % of the expected 60. The second threshold is `hourly.min_variable_coverage_pct` in config; 0 turns it off.
 
-**`health_daily`**: `station_id`, `date_utc`, `score`, `bad_groups` (list), `suspect_groups` (list), `missing_minutes`, `n_obs`. One row for every UTC day from the first to the last observation, including days without observations.
+**`health_daily`**: `station_id`, `date_utc`, `score`, `bad_groups` (list), `suspect_groups` (list), `missing_minutes`, `n_obs`. One row for every UTC day a coverage window touches, including days inside a window that hold no observations. Days no export covers get no row.
 
 **`channel_status_daily`**: `station_id`, `date_utc`, `group`, `status` (good, suspect or bad), `rules` (the rule ids behind a suspect or bad status). One row per scored group per day; `health_daily` summarises it.
 
@@ -134,7 +138,7 @@ For each UTC day, score every channel group in section 3 **except `derived_fw`**
 
 - A channel group is **bad** if one of its channels is empty for the day (R12; a day without any observations counts as empty), or more than 5 % of its rows are flagged 2, or R13 fired.
 - A channel group is **suspect** if it is not bad and more than 5 % of its rows are flagged 1, or R11 fired for it that day.
-- `missing_minutes` is the missing time that falls inside the day. A gap's missing time runs from one expected interval (60 s) after the last observation to the next observation, and is split at UTC midnight. A three-day outage therefore charges each day its own share, and the fully empty days score 0.
+- `missing_minutes` is the missing time that falls inside the day *and* inside a coverage window. A gap's missing time runs from one expected interval (60 s) after the last observation to the next observation, and is split at UTC midnight. A three-day outage inside one export therefore charges each day its own share, and the fully empty days score 0. The space between two exports is charged to nobody.
 - `score = max(0, 100 − 10 × n_bad_groups − 2 × n_suspect_groups − missing_minutes / 14.4)`, rounded to one decimal place. 14.4 minutes is 1 % of a day.
 
 Weights (10, 2, 14.4) and the 5 % share come from config. The report must print this rule next to the chart.
@@ -156,7 +160,7 @@ A04 depends on converting light counts to irradiance, which belongs to the appli
 The payload feeds `/v1/station-health` and the web page.
 
 1. Station card: sensor_id, name, coordinates, elevation, record span, cadence, source files, the attribution the exports ask for (`3d-fewsnet.icdp.ucar.edu`) and the CHORDS DOI. That DOI identifies the CHORDS software serving the data (Daniels et al. 2014), not the station's dataset; label it as the platform citation, never as a data DOI.
-2. Coverage calendar: rows per UTC day, plus the gaps table.
+2. Coverage calendar: rows per UTC day, the periods the exports cover, and the gaps table with each gap marked as a reporting gap or as the space between two exports.
 3. Health score by day, with the rule text from section 8.
 4. Channel-group status per day (good, suspect, bad) with the rule ids that caused it.
 5. Thermometer agreement (A05).

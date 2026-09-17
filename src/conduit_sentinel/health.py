@@ -18,12 +18,18 @@ HEALTH_COLUMNS = (
 )
 
 
-def record_days(obs: pd.DataFrame) -> pd.DatetimeIndex:
-    """Every UTC day from the first to the last observation, as midnight timestamps."""
-    if obs.empty:
-        return pd.DatetimeIndex([], tz="UTC")
-    times = obs["time_utc"]
-    return pd.date_range(times.min().floor("D"), times.max().floor("D"), freq="D")
+def record_days(
+    coverage: tuple[tuple[pd.Timestamp, pd.Timestamp], ...],
+) -> pd.DatetimeIndex:
+    """Every UTC day the input covers, as midnight timestamps.
+
+    Days between two exports are left out: nothing was recorded about them either way,
+    so scoring them would report an outage the data cannot show.
+    """
+    days = pd.DatetimeIndex([], tz="UTC")
+    for start, end in coverage:
+        days = days.union(pd.date_range(start.floor("D"), end.floor("D"), freq="D"))
+    return days
 
 
 def group_status(qc: QCResult, config: Config) -> pd.DataFrame:
@@ -35,7 +41,7 @@ def group_status(qc: QCResult, config: Config) -> pd.DataFrame:
     flagged suspect or R11 fired. `rules` lists the rule ids behind the status.
     """
     obs = qc.obs
-    days = record_days(obs)
+    days = record_days(qc.coverage)
     if days.empty:
         return pd.DataFrame(columns=list(STATUS_COLUMNS))
 
@@ -84,12 +90,12 @@ def group_status(qc: QCResult, config: Config) -> pd.DataFrame:
 def health_daily(qc: QCResult, status: pd.DataFrame, config: Config) -> pd.DataFrame:
     """Daily health score: 100 minus penalties for bad and suspect groups and missing minutes."""
     obs = qc.obs
-    days = record_days(obs)
+    days = record_days(qc.coverage)
     if days.empty:
         return pd.DataFrame(columns=list(HEALTH_COLUMNS))
 
     n_obs = obs["time_utc"].dt.floor("D").value_counts().reindex(days, fill_value=0)
-    missing = missing_minutes_by_day(qc.gaps, days, config.station.expected_interval_s)
+    missing = missing_minutes_by_day(qc.gaps, days, config.station.expected_interval_s, qc.coverage)
     groups_by_status = {
         label: status[status["status"] == label].groupby("date_utc")["group"].agg(list)
         for label in ("bad", "suspect")
@@ -122,24 +128,33 @@ def health_daily(qc: QCResult, status: pd.DataFrame, config: Config) -> pd.DataF
 
 
 def missing_minutes_by_day(
-    gaps: pd.DataFrame, days: pd.DatetimeIndex, expected_interval_s: float
+    gaps: pd.DataFrame,
+    days: pd.DatetimeIndex,
+    expected_interval_s: float,
+    coverage: tuple[tuple[pd.Timestamp, pd.Timestamp], ...] | None = None,
 ) -> pd.Series:
     """Missing minutes charged to each UTC day.
 
     A gap's missing time runs from one expected interval after the last observation to the
-    next observation; the part falling inside each day is charged to that day.
+    next observation; the part falling inside each day is charged to that day. Only time
+    inside a coverage window counts, so the space between two exports is not charged to
+    anyone. Without `coverage`, the whole gap counts.
     """
     totals = pd.Series(0.0, index=days)
     one_day = pd.Timedelta(days=1)
     step = pd.Timedelta(seconds=expected_interval_s)
     for start, end in zip(gaps["gap_start_utc"], gaps["gap_end_utc"], strict=True):
-        missing_from = start + step
-        moment = missing_from.floor("D")
-        while moment < end:
-            minutes = (min(end, moment + one_day) - max(missing_from, moment)).total_seconds() / 60
-            if minutes > 0 and moment in totals.index:
-                totals.loc[moment] += minutes
-            moment += one_day
+        for window_start, window_end in coverage or ((start, end),):
+            missing_from = max(start + step, window_start)
+            missing_to = min(end, window_end)
+            if missing_to <= missing_from:
+                continue
+            moment = missing_from.floor("D")
+            while moment < missing_to:
+                inside = min(missing_to, moment + one_day) - max(missing_from, moment)
+                if moment in totals.index:
+                    totals.loc[moment] += inside.total_seconds() / 60
+                moment += one_day
     return totals
 
 

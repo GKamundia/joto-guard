@@ -62,16 +62,22 @@ def find_csv_files(inputs: Sequence[Path]) -> list[Path]:
 
 def summary(result: SentinelRun) -> str:
     station, obs, health = result.ingest.station, result.qc.obs, result.health
-    times = obs["time_utc"]
+    times, intervals = obs["time_utc"], result.qc.intervals
+    n_files = len(result.ingest.files)
     lines = [
         f"Station {station.station_id}: {station.name}",
-        f"Observations: {len(obs):,} from {len(result.ingest.files)} files "
+        f"Observations: {len(obs):,} from {n_files} file{'' if n_files == 1 else 's'} "
         f"({result.ingest.duplicates_removed:,} duplicate timestamps removed)",
         f"Record: {times.min():%Y-%m-%dT%H:%M:%SZ} to {times.max():%Y-%m-%dT%H:%M:%SZ}",
-        f"Gaps: {result.qc.intervals.gaps}; late intervals: {result.qc.intervals.late}",
+        f"Gaps: {intervals.gaps}; late intervals: {intervals.late}",
         f"Daily health score: {health['score'].min():g} to {health['score'].max():g} "
         f"over {len(health)} days",
     ]
+    if intervals.between_exports:
+        lines.append(
+            f"Exports do not meet {intervals.between_exports} time(s); "
+            "days no export covers are not scored"
+        )
     return "\n".join(lines)
 
 

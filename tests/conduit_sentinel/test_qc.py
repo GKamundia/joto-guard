@@ -289,3 +289,37 @@ def test_run_lengths():
 def test_usable_hides_bad_and_missing_values(make_obs, config):
     result = apply_qc(make_obs(n=3, t_sht_c=[46.0, np.nan, 20.4]), config)
     assert usable(result.obs, "t_sht_c").isna().tolist() == [True, True, False]
+
+
+def test_gap_inside_one_export_is_a_reporting_gap(make_obs, config):
+    result = apply_qc(make_obs(offsets_s=[0, 60, 660]), config)
+
+    assert result.gaps["kind"].tolist() == ["reporting"]
+    assert (result.intervals.gaps, result.intervals.between_exports) == (1, 0)
+    assert result.intervals.max_s == 600
+
+
+def test_gap_between_two_exports_is_labelled_and_left_out_of_the_cadence(make_obs, config):
+    obs = make_obs(offsets_s=[0, 60, 6 * 86400, 6 * 86400 + 60])
+    times = obs["time_utc"]
+    coverage = ((times.iloc[0], times.iloc[1]), (times.iloc[2], times.iloc[3]))
+
+    result = apply_qc(obs, config, coverage)
+
+    assert result.gaps["kind"].tolist() == ["between_exports"]
+    assert (result.intervals.gaps, result.intervals.between_exports) == (0, 1)
+    assert result.intervals.max_s == 60  # the six days between exports are not a cadence
+    assert result.coverage == coverage
+
+
+def test_observations_missing_a_column_are_refused(make_obs, config):
+    with pytest.raises(ValueError, match="missing columns"):
+        apply_qc(make_obs(n=3).drop(columns=["rh_pct"]), config)
+
+
+def test_two_stations_at_once_are_refused(make_obs, config):
+    obs = make_obs(n=4)
+    obs.loc[2:, "station_id"] = 10
+
+    with pytest.raises(ValueError, match="one station at a time"):
+        apply_qc(obs, config)

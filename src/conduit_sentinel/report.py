@@ -152,10 +152,13 @@ def _coverage(health: pd.DataFrame, qc: QCResult, config: Config) -> dict:
             }
             for row in health.itertuples(index=False)
         ],
+        "export_windows": [{"start_utc": start, "end_utc": end} for start, end in qc.coverage],
         "gaps": _records(qc.gaps.drop(columns="station_id")),
         "gap_threshold_s": config.qc.gap_interval_s,
         "late_threshold_s": config.qc.late_interval_s,
         "late_intervals": qc.intervals.late,
+        "reporting_gaps": qc.intervals.gaps,
+        "gaps_between_exports": qc.intervals.between_exports,
     }
 
 

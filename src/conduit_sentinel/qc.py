@@ -51,8 +51,20 @@ FLAT_LINE_RULES = {
     "wind_speed_ms": "R08c",
 }
 
-GAP_COLUMNS = ("station_id", "gap_start_utc", "gap_end_utc", "interval_s", "missing_minutes")
+GAP_COLUMNS = (
+    "station_id",
+    "gap_start_utc",
+    "gap_end_utc",
+    "interval_s",
+    "missing_minutes",
+    "kind",
+)
 RULE_HIT_COLUMNS = ("rule_id", "variable", "date_utc", "n_rows")
+
+# A gap inside one coverage window is the station missing reports; a gap that runs from
+# one window to the next is only the space between two exports.
+REPORTING_GAP = "reporting"
+BETWEEN_EXPORTS = "between_exports"
 
 
 @dataclass(frozen=True)
@@ -62,6 +74,7 @@ class IntervalSummary:
     max_s: float | None
     late: int
     gaps: int
+    between_exports: int
 
 
 @dataclass(frozen=True)
@@ -70,16 +83,27 @@ class QCResult:
     gaps: pd.DataFrame
     rule_hits: pd.DataFrame
     intervals: IntervalSummary
+    coverage: tuple[tuple[pd.Timestamp, pd.Timestamp], ...]
 
 
-def apply_qc(obs: pd.DataFrame, config: Config) -> QCResult:
+def apply_qc(
+    obs: pd.DataFrame,
+    config: Config,
+    coverage: tuple[tuple[pd.Timestamp, pd.Timestamp], ...] | None = None,
+) -> QCResult:
     """Flag obs_raw and build the gaps table.
 
     Returns obs_qc (obs_raw plus one qc_<variable> flag column per variable and qc_notes),
     the gaps table, and rule_hits: how many rows each rule fired on, per variable and UTC day.
+
+    `coverage` is the periods the input claims to cover, from `ingest`. It defaults to the
+    span of the observations, which is right for a single continuous export.
     """
     _check_obs(obs)
     obs = obs.reset_index(drop=True)
+    if coverage is None:
+        times = obs["time_utc"]
+        coverage = ((times.min(), times.max()),) if len(obs) else ()
     day = obs["time_utc"].dt.floor("D")
     interval_s = obs["time_utc"].diff().dt.total_seconds()
     flags = _Flags(len(obs))
@@ -93,7 +117,7 @@ def apply_qc(obs: pd.DataFrame, config: Config) -> QCResult:
     _check_rain_gauges(obs, day, config, flags)
     _check_empty_channels(obs, day, flags)
     _check_duplicate_gust_direction(obs, day, config, flags)
-    gaps, intervals = _check_intervals(obs, interval_s, config, flags)
+    gaps, intervals = _check_intervals(obs, interval_s, config, coverage, flags)
     code = obs["health_code"]
     flags.mark("R15", "health_code", code.notna() & (code != 0))
     flags.mark("R16", "wbgt_fw_c", obs["wbgt_fw_c"] < obs["wet_bulb_fw_c"] - EPS)
@@ -110,6 +134,7 @@ def apply_qc(obs: pd.DataFrame, config: Config) -> QCResult:
         gaps=gaps,
         rule_hits=flags.hits_by_day(day),
         intervals=intervals,
+        coverage=tuple(coverage),
     )
 
 
@@ -275,7 +300,11 @@ def _check_duplicate_gust_direction(
 
 
 def _check_intervals(
-    obs: pd.DataFrame, interval_s: pd.Series, config: Config, flags: _Flags
+    obs: pd.DataFrame,
+    interval_s: pd.Series,
+    config: Config,
+    coverage: tuple[tuple[pd.Timestamp, pd.Timestamp], ...],
+    flags: _Flags,
 ) -> tuple[pd.DataFrame, IntervalSummary]:
     late_s, gap_s = config.qc.late_interval_s, config.qc.gap_interval_s
     late = (interval_s >= late_s - EPS) & (interval_s <= gap_s + EPS)
@@ -283,23 +312,37 @@ def _check_intervals(
     flags.mark("R14", "time_utc", late | gap)
 
     expected_s = config.station.expected_interval_s
+    starts = obs["time_utc"].shift()[gap]
     gaps = pd.DataFrame(
         {
             "station_id": obs["station_id"][gap],
-            "gap_start_utc": obs["time_utc"].shift()[gap],
+            "gap_start_utc": starts,
             "gap_end_utc": obs["time_utc"][gap],
             "interval_s": interval_s[gap],
             "missing_minutes": ((interval_s[gap] - expected_s) / 60).round(2),
-        },
-        columns=list(GAP_COLUMNS),
-    ).reset_index(drop=True)
+        }
+    )
+    gaps["kind"] = [
+        REPORTING_GAP if _inside_one_window(start, end, coverage) else BETWEEN_EXPORTS
+        for start, end in zip(gaps["gap_start_utc"], gaps["gap_end_utc"], strict=True)
+    ]
+    between = gap & gap.index.isin(gaps.index[gaps["kind"] == BETWEEN_EXPORTS])
+    gaps = gaps[list(GAP_COLUMNS)].reset_index(drop=True)
 
-    measured = interval_s.dropna()
+    # The cadence describes how the station reports, so the space between exports is left out.
+    measured = interval_s[~between].dropna()
     summary = IntervalSummary(
         median_s=float(measured.median()) if len(measured) else None,
         min_s=float(measured.min()) if len(measured) else None,
         max_s=float(measured.max()) if len(measured) else None,
         late=int(late.sum()),
-        gaps=int(gap.sum()),
+        gaps=int((gaps["kind"] == REPORTING_GAP).sum()),
+        between_exports=int((gaps["kind"] == BETWEEN_EXPORTS).sum()),
     )
     return gaps, summary
+
+
+def _inside_one_window(
+    start: pd.Timestamp, end: pd.Timestamp, coverage: tuple[tuple[pd.Timestamp, pd.Timestamp], ...]
+) -> bool:
+    return any(window_start <= start and end <= window_end for window_start, window_end in coverage)

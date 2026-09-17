@@ -62,6 +62,9 @@ class IngestResult:
     obs: pd.DataFrame
     station: Station
     files: tuple[SourceFile, ...]
+    # The periods the exports claim to cover, overlapping files merged. Outside them
+    # nothing is known about the station: absent data was never exported, not missed.
+    coverage: tuple[tuple[pd.Timestamp, pd.Timestamp], ...]
     duplicates_removed: int
     conflicting_duplicates: int
 
@@ -180,9 +183,26 @@ def ingest(paths: Iterable[str | Path]) -> IngestResult:
         obs=obs[list(OBS_RAW_COLUMNS)],
         station=station,
         files=tuple(files),
+        coverage=merge_windows((f.first_utc, f.last_utc) for f in files),
         duplicates_removed=removed,
         conflicting_duplicates=conflicting,
     )
+
+
+def merge_windows(
+    windows: Iterable[tuple[pd.Timestamp | None, pd.Timestamp | None]],
+) -> tuple[tuple[pd.Timestamp, pd.Timestamp], ...]:
+    """Sort periods and join the ones that overlap or touch. Empty periods are dropped."""
+    ordered = sorted(
+        (start, end) for start, end in windows if start is not None and end is not None
+    )
+    merged: list[list[pd.Timestamp]] = []
+    for start, end in ordered:
+        if merged and start <= merged[-1][1]:
+            merged[-1][1] = max(merged[-1][1], end)
+        else:
+            merged.append([start, end])
+    return tuple((start, end) for start, end in merged)
 
 
 def _canonical_frame(raw: pd.DataFrame, source: str) -> tuple[pd.DataFrame, int]:

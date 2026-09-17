@@ -1,10 +1,16 @@
+from dataclasses import replace
 from datetime import date
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from conduit_sentinel.health import group_status, health_daily, missing_minutes_by_day
+from conduit_sentinel.health import (
+    STATUS_COLUMNS,
+    group_status,
+    health_daily,
+    missing_minutes_by_day,
+)
 from conduit_sentinel.qc import apply_qc
 from conduit_sentinel.schema import SCORED_GROUPS
 
@@ -109,3 +115,44 @@ def test_missing_minutes_split_a_multi_day_gap():
     minutes = missing_minutes_by_day(gaps, days, expected_interval_s=60)
 
     assert minutes.round(2).tolist() == [719.0, 1440.0, 360.0]
+
+
+def test_days_no_export_covers_are_not_scored(make_obs, config):
+    obs = make_obs(offsets_s=[0, 60, 6 * 86400, 6 * 86400 + 60])
+    times = obs["time_utc"]
+    coverage = ((times.iloc[0], times.iloc[1]), (times.iloc[2], times.iloc[3]))
+    qc = apply_qc(obs, config, coverage)
+    status = group_status(qc, config)
+    health = health_daily(qc, status, config)
+
+    assert health["date_utc"].tolist() == [date(2026, 8, 28), date(2026, 9, 3)]
+    assert health["missing_minutes"].tolist() == [0.0, 0.0]
+    assert health["score"].tolist() == [100.0, 100.0]
+    assert set(status["date_utc"]) == {date(2026, 8, 28), date(2026, 9, 3)}
+
+
+def test_missing_minutes_are_clipped_to_the_covered_periods():
+    gaps = pd.DataFrame(
+        {
+            "gap_start_utc": [pd.Timestamp("2026-08-28T23:50:00Z")],
+            "gap_end_utc": [pd.Timestamp("2026-09-03T00:10:00Z")],
+        }
+    )
+    days = pd.DatetimeIndex(["2026-08-28", "2026-09-03"], tz="UTC")
+    coverage = (
+        (pd.Timestamp("2026-08-28T00:00:00Z"), pd.Timestamp("2026-08-28T23:50:00Z")),
+        (pd.Timestamp("2026-09-03T00:10:00Z"), pd.Timestamp("2026-09-03T23:50:00Z")),
+    )
+
+    minutes = missing_minutes_by_day(gaps, days, expected_interval_s=60, coverage=coverage)
+
+    assert minutes.tolist() == [0.0, 0.0]
+
+
+def test_without_covered_days_the_tables_are_empty(make_obs, config):
+    qc = replace(apply_qc(make_obs(n=3), config), coverage=())
+    status = group_status(qc, config)
+
+    assert status.empty
+    assert list(status.columns) == list(STATUS_COLUMNS)
+    assert health_daily(qc, status, config).empty

@@ -1,7 +1,12 @@
 import pandas as pd
 import pytest
 
-from conduit_sentinel.ingest import ingest, read_geocsv, station_from_metadata
+from conduit_sentinel.ingest import (
+    ingest,
+    merge_windows,
+    read_geocsv,
+    station_from_metadata,
+)
 from conduit_sentinel.schema import OBS_RAW_COLUMNS
 
 
@@ -152,3 +157,96 @@ def test_file_without_a_time_column_is_refused(tmp_path):
 def test_no_input_files_is_an_error():
     with pytest.raises(ValueError, match="no input files"):
         ingest([])
+
+
+def test_coverage_merges_overlapping_exports(fixtures_dir):
+    result = ingest([fixtures_dir / "conduit_part_a.csv", fixtures_dir / "conduit_part_b.csv"])
+
+    assert result.coverage == (
+        (pd.Timestamp("2026-08-28T00:00:25Z"), pd.Timestamp("2026-08-28T00:09:50Z")),
+    )
+
+
+def test_coverage_keeps_exports_that_do_not_meet(fixtures_dir, tmp_path):
+    later = tmp_path / "later.csv"
+    later.write_text(
+        (fixtures_dir / "conduit_part_b.csv").read_text().replace("2026-08-28T", "2026-09-28T")
+    )
+    coverage = ingest([fixtures_dir / "conduit_part_a.csv", later]).coverage
+
+    assert coverage == (
+        (pd.Timestamp("2026-08-28T00:00:25Z"), pd.Timestamp("2026-08-28T00:05:28Z")),
+        (pd.Timestamp("2026-09-28T00:04:27Z"), pd.Timestamp("2026-09-28T00:09:50Z")),
+    )
+
+
+def test_merge_windows_joins_touching_periods():
+    stamps = [pd.Timestamp(f"2026-08-2{d}T00:00:00Z") for d in range(1, 9)]
+    merged = merge_windows([(stamps[2], stamps[4]), (stamps[0], stamps[3]), (stamps[6], stamps[7])])
+
+    assert merged == ((stamps[0], stamps[4]), (stamps[6], stamps[7]))
+
+
+def test_header_without_a_measurement_count(fixtures_dir, tmp_path):
+    path = tmp_path / "no_count.csv"
+    path.write_text(
+        (fixtures_dir / "conduit_part_a.csv")
+        .read_text()
+        .replace("# Measurements in File: 144\n", "")
+    )
+    source = ingest([path]).files[0]
+
+    assert source.measurements_declared is None
+    assert source.measurements_match is None
+
+
+def test_file_without_a_header_row_is_refused(tmp_path):
+    path = tmp_path / "only_metadata.csv"
+    path.write_text("# sensor_id: 61\n# data collection latitude: -1.1\n")
+
+    with pytest.raises(ValueError, match="no header row"):
+        ingest([path])
+
+
+def test_unknown_column_is_ignored_with_a_warning(fixtures_dir, tmp_path, caplog):
+    lines = (fixtures_dir / "conduit_part_a.csv").read_text().splitlines()
+    header_at = next(i for i, line in enumerate(lines) if not line.startswith("#"))
+    lines[header_at] += ",Soil Moisture"
+    for i in range(header_at + 1, len(lines)):
+        lines[i] += ",0.3"
+    path = tmp_path / "extra_column.csv"
+    path.write_text("\n".join(lines) + "\n")
+
+    with caplog.at_level("WARNING"):
+        result = ingest([path])
+
+    assert "Soil Moisture" in caplog.text
+    assert list(result.obs.columns) == list(OBS_RAW_COLUMNS)
+    assert result.files[0].measurements_counted == 144
+
+
+def test_location_difference_between_files_is_logged(fixtures_dir, tmp_path, caplog):
+    moved = tmp_path / "moved.csv"
+    moved.write_text(
+        (fixtures_dir / "conduit_part_b.csv")
+        .read_text()
+        .replace("# data collection latitude: -1.099736", "# data collection latitude: -1.2")
+    )
+
+    with caplog.at_level("WARNING"):
+        result = ingest([fixtures_dir / "conduit_part_a.csv", moved])
+
+    assert "location differs" in caplog.text
+    assert result.station.latitude == -1.099736  # the earliest export wins
+
+
+def test_unreadable_station_metadata_is_an_error():
+    with pytest.raises(ValueError, match="not a number"):
+        station_from_metadata(
+            {
+                "sensor_id": "61",
+                "data collection latitude": "north",
+                "data collection longitude": "37.014528",
+                "data collection elevation": "1523.0 meters",
+            }
+        )

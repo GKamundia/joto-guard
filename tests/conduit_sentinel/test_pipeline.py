@@ -55,3 +55,51 @@ def test_command_line_reports_a_missing_input(tmp_path, config_path, capsys):
 
     assert code == 1
     assert "no such file or folder" in capsys.readouterr().err
+
+
+def test_command_line_accepts_single_files(fixtures_dir, config_path, tmp_path, capsys):
+    code = main(
+        [
+            str(fixtures_dir / "conduit_part_a.csv"),
+            "--config",
+            str(config_path),
+            "--out",
+            str(tmp_path),
+        ]
+    )
+
+    assert code == 0
+    assert "Observations: 6 from 1 file " in capsys.readouterr().out
+
+
+def test_command_line_reports_an_empty_folder(tmp_path, config_path, capsys):
+    empty = tmp_path / "empty"
+    empty.mkdir()
+
+    code = main([str(empty), "--config", str(config_path), "--out", str(tmp_path)])
+
+    assert code == 1
+    assert "no CSV files found" in capsys.readouterr().err
+
+
+def test_command_line_notes_exports_that_do_not_meet(fixtures_dir, config_path, tmp_path, capsys):
+    later = tmp_path / "later.csv"
+    later.write_text(
+        (fixtures_dir / "conduit_part_b.csv").read_text().replace("2026-08-28T", "2026-09-28T")
+    )
+
+    code = main(
+        [
+            str(fixtures_dir / "conduit_part_a.csv"),
+            str(later),
+            "--config",
+            str(config_path),
+            "--out",
+            str(tmp_path / "out"),
+        ]
+    )
+
+    assert code == 0
+    output = capsys.readouterr().out
+    assert "Exports do not meet 1 time(s)" in output
+    assert "over 2 days" in output  # 28 Aug and 28 Sep, not the month between them
