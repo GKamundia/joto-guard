@@ -1,0 +1,38 @@
+# Secrets
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+build/
+dist/
+.ipynb_checkpoints/
+
+# Node / web
+node_modules/
+web/dist/
+web/.vite/
+
+# Data: keep folder READMEs and the small organiser sample, ignore bulky or regenerable data
+data/raw/portal/*
+!data/raw/portal/.gitkeep
+data/interim/*
+!data/interim/README.md
+data/reference/*
+!data/reference/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+*.duckdb
+*.parquet
+
+# OS / editors
+.DS_Store
+.vscode/
+.idea/
