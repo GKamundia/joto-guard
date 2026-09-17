@@ -1,6 +1,8 @@
 # Conduit Sentinel: specification
 
-Version 0.1, 17 Sep 2026. This is the build contract for `src/conduit_sentinel/`. Every expected value in section 11 was computed from the two organiser CSVs; if an implementation disagrees, check the implementation first, then raise it with the team.
+Version 0.2, 17 Sep 2026. This is the build contract for `src/conduit_sentinel/`. Every expected value in section 11 was computed from the two organiser CSVs; if an implementation disagrees, check the implementation first, then raise it with the team.
+
+Changes from 0.1 (same day, see `decisions/0004-spec-corrections-from-implementation.md`): the late-interval count in section 11 is 22, not 21; missing minutes are charged to the days they fall in, and days without observations get a health row; the hourly, R11 and `qc_notes` rules are stated precisely; two supporting tables (`rule_hits`, `channel_status_daily`) are added.
 
 ## 1. Purpose and scope
 
@@ -58,13 +60,17 @@ The `_fw` suffix marks values computed by the station firmware, so nobody confus
 
 **`obs_raw`**: one row per observation. Columns: `station_id` (int, 61), `time_utc`, the canonical variables, and `source_file`.
 
-**`obs_qc`**: `obs_raw` plus one `qc_<variable>` column per variable (int flag, section 7), plus `qc_notes` (semicolon-separated rule ids that fired on that row).
+**`obs_qc`**: `obs_raw` plus one `qc_<variable>` column per variable (int flag, section 7), plus `qc_notes` (semicolon-separated rule ids that fired on that row, sorted, each once). A null value is always flagged 3. Daily rules (R11, R12, R13) note every row of the day they fire on, so every non-zero flag on a row is explained in its notes.
 
 **`gaps`**: `station_id`, `gap_start_utc` (last observation before the gap), `gap_end_utc` (first after), `interval_s`, `missing_minutes` = (interval_s − 60) / 60.
 
-**`obs_hourly`**: `station_id`, `hour_utc`, `n_obs`, `coverage_pct` = n_obs / 60 × 100, the mean of each continuous variable over rows flagged 0 or 1, the maximum wind gust, and hourly rain sums per gauge. A value is null when `coverage_pct` is below 50.
+**`obs_hourly`**: `station_id`, `hour_utc`, `n_obs`, `coverage_pct` = n_obs / 60 × 100, then one column per variable under its canonical name: the mean over rows flagged 0 or 1 for continuous variables, the circular (unit-vector) mean for `wind_dir_deg`, the maximum for `wind_gust_ms`, and the sum for `rain1_mm` and `rain2_mm`. Device codes, the station's running rain totals and `wind_gust_dir_deg` are not aggregated. Every hour from the first to the last observation has a row, including hours without data. A value is null when `coverage_pct` is below 50, or when the variable's usable (flag 0 or 1) values cover less than 50 % of the expected 60. The second threshold is `hourly.min_variable_coverage_pct` in config; 0 turns it off.
 
-**`health_daily`**: `station_id`, `date_utc`, `score`, `bad_groups` (list), `suspect_groups` (list), `missing_minutes`, `n_obs`.
+**`health_daily`**: `station_id`, `date_utc`, `score`, `bad_groups` (list), `suspect_groups` (list), `missing_minutes`, `n_obs`. One row for every UTC day from the first to the last observation, including days without observations.
+
+**`channel_status_daily`**: `station_id`, `date_utc`, `group`, `status` (good, suspect or bad), `rules` (the rule ids behind a suspect or bad status). One row per scored group per day; `health_daily` summarises it.
+
+**`rule_hits`**: `rule_id`, `variable`, `date_utc`, `n_rows`: how many rows each rule fired on, per variable and UTC day. R14 is recorded against `time_utc`.
 
 **`audit_results`**: one row per audit (section 9). Columns: `audit_id`, `variable`, `metric`, `value`, `n_rows`, `verdict`, `note`.
 
@@ -74,12 +80,16 @@ The `_fw` suffix marks values computed by the station firmware, so nobody confus
 
 | Module | Responsibility | Main inputs | Main outputs |
 |---|---|---|---|
-| `ingest.py` | Parse GeoCSV metadata and data; map to canonical names; parse times as UTC; concatenate files; drop exact duplicate timestamps and log the count; check the measurement count | GeoCSV paths | `obs_raw`, station metadata dict, ingest log |
-| `qc.py` | Apply the rules in section 6 using `config/qc_rules.yaml`; produce flags and `qc_notes`; build the `gaps` table | `obs_raw`, config | `obs_qc`, `gaps` |
+| `schema.py` | Column map, channel groups and flag codes (sections 3 and 7) | | |
+| `config.py` | Load and validate `config/qc_rules.yaml` | YAML path | `Config` |
+| `ingest.py` | Parse GeoCSV metadata and data; map to canonical names; parse times as UTC; concatenate files; drop exact duplicate timestamps and log the count; check the measurement count | GeoCSV paths | `obs_raw`, station metadata, per-file ingest record |
+| `qc.py` | Apply the rules in section 6 using `config/qc_rules.yaml`; produce flags and `qc_notes`; build the `gaps` table | `obs_raw`, config | `obs_qc`, `gaps`, `rule_hits` |
 | `aggregate.py` | Hourly aggregation with coverage | `obs_qc` | `obs_hourly` |
-| `health.py` | Daily health score (section 8) | `obs_qc`, `gaps`, config | `health_daily` |
+| `health.py` | Daily health score (section 8) | `obs_qc`, `gaps`, `rule_hits`, config | `channel_status_daily`, `health_daily` |
+| `thermo.py` | Stull (2011) wet bulb and NWS heat index | temperature, humidity | arrays |
 | `audit.py` | Derived-variable audits (section 9) | `obs_qc` | `audit_results` |
 | `report.py` | Assemble the Station Health Report payload | all of the above, station metadata | `report.json` |
+| `pipeline.py`, `__main__.py` | Run every step and write the outputs; command line | GeoCSV paths, config | files in `data/processed/` |
 
 Keep functions pure where possible: data in, data out, no hidden file or network access.
 
@@ -101,10 +111,10 @@ Thresholds go in `config/qc_rules.yaml`. The values below are the starting defau
 | R08c | wind_speed_ms | Flat line, **excluding zero** (calm nights are real) | 180 or more non-zero identical rows | 1 |
 | R09 | thermometers | Any pair differs | above 2.0 °C | 1 on all three |
 | R10 | wind_gust_ms | Gust below speed | gust below speed | 1 |
-| R11 | rain_gauge_2 vs rain_gauge_1 (daily) | One gauge records ≥ 0.4 mm in a UTC day, the other 0 | 0.4 mm | 1 on the zero gauge for that day |
+| R11 | rain_gauge_2 vs rain_gauge_1 (daily) | One gauge records ≥ 0.4 mm in a UTC day, the other reports and sums to 0 (values flagged 2 are not counted) | 0.4 mm | 1 on every channel of the zero gauge for that day |
 | R12 | any variable (daily) | Empty for the whole UTC day | all null | 3; the group counts as *bad* in the health score |
 | R13 | wind_gust_dir_deg (daily) | Identical to wind_gust_ms | ≥ 99 % of rows in the day | 2; exclude the column |
-| R14 | time | Interval between rows | above 300 s creates a `gaps` row; 120 to 300 s counts as "late" (info only) | none |
+| R14 | time | Interval between rows | above 300 s creates a `gaps` row; 120 to 300 s inclusive counts as "late" (info only) | none |
 | R15 | health_code | Non-zero device code | any non-zero | info note only (meaning undocumented) |
 | R16 | wbgt_fw_c | Below the firmware wet bulb | wbgt_fw_c < wet_bulb_fw_c | 1, note `wbgt_below_wet_bulb` |
 
@@ -122,9 +132,9 @@ Thresholds go in `config/qc_rules.yaml`. The values below are the starting defau
 
 For each UTC day, score every channel group in section 3 **except `derived_fw`**. Firmware-derived values are judged by the audit in section 9, not by the health score; otherwise R16 would mark every day suspect because of a formula choice, not a sensor problem.
 
-- A channel group is **bad** if it is empty for the day (R12), or more than 5 % of its rows are flagged 2, or R13 fired.
+- A channel group is **bad** if one of its channels is empty for the day (R12; a day without any observations counts as empty), or more than 5 % of its rows are flagged 2, or R13 fired.
 - A channel group is **suspect** if it is not bad and more than 5 % of its rows are flagged 1, or R11 fired for it that day.
-- `missing_minutes` is the sum of `missing_minutes` for gaps ending that day.
+- `missing_minutes` is the missing time that falls inside the day. A gap's missing time runs from one expected interval (60 s) after the last observation to the next observation, and is split at UTC midnight. A three-day outage therefore charges each day its own share, and the fully empty days score 0.
 - `score = max(0, 100 − 10 × n_bad_groups − 2 × n_suspect_groups − missing_minutes / 14.4)`, rounded to one decimal place. 14.4 minutes is 1 % of a day.
 
 Weights (10, 2, 14.4) and the 5 % share come from config. The report must print this rule next to the chart.
@@ -172,7 +182,7 @@ Files: `data/raw/organiser/` (see its README for exact names).
 | Station metadata | sensor_id 61; lat -1.099736; lon 37.014528; elevation 1523.0 |
 | Median interval | 61 s; minimum 60 s; maximum 755 s |
 | Gaps above 300 s | exactly 1: interval 755 s ending 2026-08-30T03:45:32Z; missing_minutes 11.58 |
-| Late intervals (120 to 300 s) | 21 |
+| Late intervals (120 to 300 s inclusive) | 22 (two intervals are exactly 120 s; 0.1 printed 21, which also counted the 755 s gap) |
 | Hourly rows | 192 hours; exactly one hour below 54 observations: 2026-08-30T03:00Z with 48 |
 | Rain Gauge 1 | total 0.4 mm; two 0.2 mm tips at 2026-08-31T00:13:44Z and 03:41:33Z |
 | Rain Gauge 2 | total 0.0 mm; R11 fires on 2026-08-31 only |
