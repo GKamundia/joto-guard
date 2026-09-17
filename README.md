@@ -45,11 +45,41 @@ _TBD: diagram in `docs/architecture/` plus three sentences._
 
 ## 8. Installation and setup
 
-_TBD: prerequisites, `.env` from `.env.example`, install commands._
+Prerequisites: Python 3.11 or newer.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+```
+
+Put the two organiser GeoCSV files in `data/raw/organiser/` (see its README). _TBD: `.env` from `.env.example` once the API and bot exist._
 
 ## 9. Usage
 
-_TBD: how to run the pipeline, API, web app and bot; example commands._
+Run Conduit Sentinel on the organiser sample. It writes the quality-controlled tables and the Station Health Report to `data/processed/`:
+
+```bash
+python -m conduit_sentinel data/raw/organiser --out data/processed
+```
+
+| Output | Contents |
+|---|---|
+| `obs_qc.csv` | every observation with a flag per variable (0 good, 1 suspect, 2 bad, 3 missing) and the rules that fired |
+| `obs_hourly.csv` | hourly values built only from good and suspect observations |
+| `gaps.csv` | reporting gaps longer than 300 s |
+| `health_daily.csv`, `channel_status_daily.csv` | daily station health score and the status of each sensor group |
+| `audit_results.csv` | checks of the firmware wet bulb, heat index and WBGT, and thermometer agreement |
+| `report.json` | the Station Health Report payload |
+
+Tests and lint:
+
+```bash
+pytest
+ruff check src tests && ruff format --check src tests
+```
+
+_TBD: API, web app and bot._
 
 ## 10. Data sources
 

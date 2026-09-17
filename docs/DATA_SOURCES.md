@@ -23,6 +23,7 @@ Record every dataset the app uses: where it came from, when it was obtained, its
 | File | Made from | How |
 |---|---|---|
 | `data/interim/conduit_combined_minute.csv` | The two organiser files | Merged, 2,825 duplicate timestamps removed, 11,302 rows. Made during planning on 15 Sep 2026, before the build started; regenerate it with `conduit_sentinel` and treat the pipeline output as authoritative. |
+| `data/processed/` (`obs_qc.csv`, `obs_hourly.csv`, `gaps.csv`, `health_daily.csv`, `channel_status_daily.csv`, `audit_results.csv`, `report.json`) | The GeoCSV files passed to Sentinel | `python -m conduit_sentinel data/raw/organiser --out data/processed`. Not tracked; rerun to regenerate. |
 
 ## External sources (add as used)
 
