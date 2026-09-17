@@ -155,7 +155,7 @@ A04 depends on converting light counts to irradiance, which belongs to the appli
 
 The payload feeds `/v1/station-health` and the web page.
 
-1. Station card: sensor_id, name, coordinates, elevation, record span, cadence, DOI, source files.
+1. Station card: sensor_id, name, coordinates, elevation, record span, cadence, source files, the attribution the exports ask for (`3d-fewsnet.icdp.ucar.edu`) and the CHORDS DOI. That DOI identifies the CHORDS software serving the data (Daniels et al. 2014), not the station's dataset; label it as the platform citation, never as a data DOI.
 2. Coverage calendar: rows per UTC day, plus the gaps table.
 3. Health score by day, with the rule text from section 8.
 4. Channel-group status per day (good, suspect, bad) with the rule ids that caused it.

@@ -40,7 +40,8 @@ def test_station_metadata_is_parsed(fixtures_dir):
         37.014528,
         1523.0,
     )
-    assert station.doi == "https://doi.org/10.5065/d6v1236q"
+    assert station.attribution == "3d-fewsnet.icdp.ucar.edu"
+    assert station.chords_doi == "https://doi.org/10.5065/d6v1236q"
 
 
 def test_station_metadata_without_sensor_id_is_an_error():

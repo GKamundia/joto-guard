@@ -31,7 +31,10 @@ class Station:
     latitude: float
     longitude: float
     elevation_m: float
-    doi: str | None
+    attribution: str | None
+    # The exports' "doi" identifies the CHORDS software that serves the data,
+    # not this station's dataset, so it must not be cited as a data DOI.
+    chords_doi: str | None
 
 
 @dataclass(frozen=True)
@@ -105,7 +108,8 @@ def station_from_metadata(metadata: Mapping[str, str], source: str = "input") ->
             latitude=_leading_number(metadata["data collection latitude"]),
             longitude=_leading_number(metadata["data collection longitude"]),
             elevation_m=_leading_number(metadata["data collection elevation"]),
-            doi=metadata.get("doi"),
+            attribution=metadata.get("attribution"),
+            chords_doi=metadata.get("doi"),
         )
     except KeyError as exc:
         raise ValueError(f"{source}: metadata has no {exc.args[0]!r} entry") from None

@@ -83,7 +83,7 @@ _TBD: API, web app and bot._
 
 ## 10. Data sources
 
-_TBD: see `docs/DATA_SOURCES.md`. Must include the Conduit@Empathy1 instrument (CHORDS sensor 61, DOI 10.5065/d6v1236q) and every external dataset with its licence or terms._
+_TBD: see `docs/DATA_SOURCES.md`. Must include the Conduit@Empathy1 instrument (CHORDS instrument 61, attributed to `3d-fewsnet.icdp.ucar.edu`), the CHORDS software citation (DOI 10.5065/d6v1236q identifies the software, not the station data) and every external dataset with its licence or terms._
 
 ## 11. AI usage
 

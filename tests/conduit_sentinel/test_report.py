@@ -18,7 +18,8 @@ STATION = Station(
     latitude=-1.099736,
     longitude=37.014528,
     elevation_m=1523.0,
-    doi="10.5065/d6v1236q",
+    attribution="3d-fewsnet.icdp.ucar.edu",
+    chords_doi="https://doi.org/10.5065/d6v1236q",
 )
 
 SECTIONS = [
@@ -79,7 +80,9 @@ def test_station_card(make_obs, config):
     card = report_for(make_obs(n=50), config)["station"]
 
     assert card["station_id"] == 61
-    assert card["doi"] == "10.5065/d6v1236q"
+    assert card["attribution"] == "3d-fewsnet.icdp.ucar.edu"
+    assert card["chords_doi"] == "https://doi.org/10.5065/d6v1236q"
+    assert "doi" not in card
     assert card["record_start_utc"] == "2026-08-28T00:00:00Z"
     assert card["record_end_utc"] == "2026-08-28T00:49:00Z"
     assert card["n_obs"] == 50

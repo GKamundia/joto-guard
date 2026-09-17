@@ -8,7 +8,9 @@ Record every dataset the app uses: where it came from, when it was obtained, its
 |---|---|
 | Instrument | "Kenya Kiambu JKUAT IOT AWS - Conduti@Empathy1", CHORDS sensor_id 61 |
 | Portal | UCAR 3D-PAWS FEWS NET CHORDS portal, `3d-fewsnet.icdp.ucar.edu/instruments/61` |
-| DOI | 10.5065/d6v1236q (attribution: 3d-fewsnet.icdp.ucar.edu) |
+| Attribution | `3d-fewsnet.icdp.ucar.edu`, as requested in every export header |
+| Platform citation | Daniels, M., Kerkez, B., Chandrasekar, V., Graves, S., Stamps, D. S., Martin, C., Botnick, A., Dye, M., Gooch, R., Jones, J., Keiser, K., Bartos, M., Nguyen, T., Collins, R., Chen, S., & Yang, T. (2014). *Cloud-Hosted Real-time Data Services for the Geosciences (CHORDS) software* (Version 0.9). University Corporation for Atmospheric Research. https://doi.org/10.5065/D6V1236Q |
+| DOI caution | The `doi` line in every export (10.5065/d6v1236q) is the CHORDS software DOI above, the same for any CHORDS portal. It is not a DOI for the Conduit@Empathy1 data, and we know of no dataset DOI for this station. Cite the software as the platform and attribute the data to the portal and instrument 61. |
 | Location | lat -1.099736, lon 37.014528, elevation 1523.0 m (JKUAT, Juja) |
 | Organiser sample | Three GeoCSV files from the Hack The Weather Resources page (Google Drive folder "HackTheWeather2026-Data", https://drive.google.com/drive/folders/1KDoCh8vss7nv_B6SuVBlQQssjSh1yaBg, owner info.jhub@jkuat.ac.ke). Stored in `data/raw/organiser/`. No file covers 5 to 10 Sep 2026. |
 | Portal history | 30 May 2025 onward (15,949,704 measurements on 17 Sep 2026). New portal accounts start as "guest"; downloading needs the "Registered User" and "Data Downloader" permissions, granted by a portal admin. Account registered 17 Sep 2026; download permission not granted as of that date. Stored in `data/raw/portal/` (git-ignored) if obtained. |
