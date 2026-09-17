@@ -1,0 +1,17 @@
+# dataset: GeoCSV 2.0
+# instrument_name: Kenya Kiambu JKUAT IOT AWS - Conduti@Empathy1
+# sensor_id: 61
+# data collection site: JKUAT
+# data collection latitude: -1.099736
+# data collection longitude: 37.014528
+# data collection elevation: 1523.0
+# Measurements in File: 144
+# creation_date: 2026-09-05T08:40:00Z
+# doi: 10.5065/d6v1236q
+Time,Health,Battery Voltage,Battery charge status,Cell signal strength,Rain Gauge 1,Rain Gauge 2,Rain Gauge 1 Total Today,Rain Gauge 2 Total Today,Rain Gauge 1 Total Prior,Rain Gauge 2 Total Prior,BMX Temperature 1,BMX Pressure 1,MCP Temperature 1,SHT Temperature,SHT Humidity,SI1145 Visible 1,SI1145 Infrared 1,SI1145 Ultraviolet 1,Wind Speed,Wind Direction,Wind Gust,Wind Gust Direction,Heat Index,Wet Bulb Temperature,Wet Bulb Globe Temperature
+2026-08-28T00:04:27Z,0,,3,100.0,0.0,0,0.0,0,0.0,0,12.2,852.2,12.4,12.6,86.7,260,254,0.0,0.0,159,0.0,0.0,12.4,11.1,8.1
+2026-08-28T00:05:28Z,0,,3,100.0,0.0,0,0.0,0,0.0,0,12.2,852.1,12.5,12.7,86.8,259,254,0.0,0.0,159,0.0,0.0,12.5,11.2,8.2
+2026-08-28T00:06:49Z,0,,3,100.0,0.0,0,0.0,0,0.0,0,12.2,852.0,12.5,12.7,87.0,260,253,0.0,0.0,159,0.0,0.0,12.5,11.2,8.2
+2026-08-28T00:07:49Z,0,,3,100.0,0.0,0,0.0,0,0.0,0,12.2,852.1,12.5,12.7,87.0,259,253,0.0,0.0,159,0.0,0.0,12.5,11.2,8.2
+2026-08-28T00:08:50Z,0,,3,100.0,0.0,0,0.0,0,0.0,0,12.2,852.1,12.5,12.7,86.8,261,253,0.0,0.0,159,0.0,0.0,12.5,11.3,8.2
+2026-08-28T00:09:50Z,0,,3,100.0,0.0,0,0.0,0,0.0,0,12.2,852.1,12.6,12.7,86.7,260,253,0.0,0.0,159,0.0,0.0,12.5,11.2,8.2
