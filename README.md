@@ -94,6 +94,14 @@ python scripts/fetch_solar_reference.py --start 2026-08-28 --end 2026-09-15
 python -m joto_guard calibrate-light --reference data/reference/open_meteo_era5_2026-08-28_2026-09-15.json
 ```
 
+Compute the station's hourly WBGT with the Liljegren et al. (2008) model. It needs only the Sentinel outputs and the tracked calibration (method and checks in `docs/decisions/0007-liljegren-wbgt.md`):
+
+```bash
+python -m joto_guard wbgt
+```
+
+It writes `data/processed/wbgt_hourly.csv`, which holds the inputs, globe temperature, natural and psychrometric wet bulb, WBGT and the firmware's own values for every hour. It also writes `data/processed/wbgt_firmware_by_hour.csv`, which compares the firmware's WBGT column with the model by hour of day.
+
 Tests and lint:
 
 ```bash

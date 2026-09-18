@@ -15,3 +15,5 @@ Date: 17 Sep 2026, decided 18 Sep 2026. Status: accepted.
 **Known weaknesses.** Heat evidence for Juja itself is thin, and KMD already issues city heat warnings, so Joto Guard is pitched as hourly guidance by type of work that complements them. With 13 days there is no trained forecast-correction model: the forecast is corrected by hour of day, the fallback in the build plan.
 
 **Consequences.** Application code lives in `src/joto_guard/` (the placeholder `src/app/` was named before the choice). The GitHub repository can be named `joto-guard` when it is created; the local folder keeps its working name.
+
+**Correction (18 Sep 2026).** "Which a real WBGT cannot do" overstates it. A standard WBGT can sit a little below the wet bulb on a calm, clear night: by up to 0.76 °C on this station's nights, and 1.4 °C at most in still air between 8 and 25 °C. The firmware's gap, up to 3.4 °C, is too large for that. See decision 0007.
