@@ -1,6 +1,6 @@
-# conduit-app (working name)
+# Joto Guard
 
-> Hack The Weather 2026 entry built on the Conduit@Empathy1 weather station at JKUAT, Juja, Kenya. Rename this repository and title once the team chooses the application (Shamba Twin or Joto Guard).
+> Hack The Weather 2026 entry built on the Conduit@Empathy1 weather station at JKUAT, Juja, Kenya.
 
 All development for this submission took place from 17 to 21 September 2026. The commit history is the record.
 
@@ -11,7 +11,7 @@ Keep "Known limitations" and "Reproducibility" as well: judges reward honesty an
 
 ## 1. Project name
 
-_TBD: final name and one-line tagline._
+**Joto Guard** (*joto* is Kiswahili for heat): hourly heat-stress guidance for outdoor work in Juja, built on a quality-controlled Conduit@Empathy1 station. _TBD: final tagline._
 
 ## 2. Problem statement
 
