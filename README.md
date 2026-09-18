@@ -127,6 +127,8 @@ _TBD_
 
 MIT. See `LICENSE`.
 
+`src/joto_guard/wbgt.py` adapts WBGT version 1.1 by James C. Liljegren, Argonne National Laboratory; its licence is in `THIRD_PARTY_NOTICES.md`. This product includes software produced by UChicago Argonne, LLC under Contract No. DE-AC02-06CH11357 with the Department of Energy.
+
 ---
 
 ## Known limitations
