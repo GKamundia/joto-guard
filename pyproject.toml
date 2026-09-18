@@ -45,4 +45,4 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
 ignore = ["RUF001", "RUF002", "RUF003"]  # unit symbols such as × and ° are intended
 
 [tool.ruff.lint.isort]
-known-first-party = ["api", "conduit_sentinel"]
+known-first-party = ["api", "conduit_sentinel", "joto_guard"]

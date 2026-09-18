@@ -27,10 +27,13 @@ Record every dataset the app uses: where it came from, when it was obtained, its
 | File | Made from | How |
 |---|---|---|
 | `data/interim/conduit_combined_minute.csv` | The two organiser files | Merged, 2,825 duplicate timestamps removed, 11,302 rows. Made during planning on 15 Sep 2026, before the build started; regenerate it with `conduit_sentinel` and treat the pipeline output as authoritative. |
-| `data/processed/` (`obs_qc.csv`, `obs_hourly.csv`, `gaps.csv`, `health_daily.csv`, `channel_status_daily.csv`, `audit_results.csv`, `report.json`) | The GeoCSV files passed to Sentinel | `python -m conduit_sentinel data/raw/organiser --out data/processed`. Not tracked; rerun to regenerate. |
+| `data/processed/` (`obs_qc.csv`, `obs_hourly.csv`, `gaps.csv`, `rule_hits.csv`, `health_daily.csv`, `channel_status_daily.csv`, `audit_results.csv`, `report.json`) | The GeoCSV files passed to Sentinel | `python -m conduit_sentinel data/raw/organiser --out data/processed`. Not tracked; rerun to regenerate. |
+| `config/solar_calibration.json` | `obs_hourly.csv` and the ERA5 reference below | `python -m joto_guard calibrate-light --reference data/reference/open_meteo_era5_2026-08-28_2026-09-15.json`. Tracked, so the calibration applies without the network. Method and skill in `decisions/0006-light-sensor-calibration.md`. |
+| `data/processed/ghi_hourly.csv` | `obs_hourly.csv` and `config/solar_calibration.json` | Written by the same command. Not tracked. |
 
 ## External sources (add as used)
 
 | Source | Use | Access | Terms | Obtained | Repo location |
 |---|---|---|---|---|---|
-| _e.g. Open-Meteo Historical Weather API_ | | | | | `data/reference/` |
+| ERA5 hourly shortwave radiation and cloud cover, through the Open-Meteo archive API (`models=era5`), grid point −1.0, 37.0, 1526 m | Reference for calibrating the light sensor to W/m² | `https://archive-api.open-meteo.com/v1/archive`, no key; `scripts/fetch_solar_reference.py`. About five days behind real time: 28 Aug to 12 Sep 2026 had values | Open-Meteo data CC BY 4.0; contains modified Copernicus Climate Change Service information | 18 Sep 2026 | `data/reference/open_meteo_era5_2026-08-28_2026-09-15.json` (not tracked) |
+| NASA POWER hourly (`ALLSKY_SFC_SW_DWN`) | Planned calibration reference; **not used** | `https://power.larc.nasa.gov/api/temporal/hourly/point`, no key | NASA open data | Checked 18 Sep 2026: every hour from 28 Aug to 15 Sep 2026 was the fill value −999 | none |

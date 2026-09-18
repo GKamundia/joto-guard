@@ -84,6 +84,16 @@ cd web && npm install && npm run dev
 
 The API is then on http://127.0.0.1:8000 (documentation at `/docs`) and the page on http://localhost:5173. The page reads `GET /v1/station-health` and holds no numbers of its own; `src/api/README.md` lists the other endpoints.
 
+Calibrate the station's light sensor to W/m², which Joto Guard's WBGT needs. The first command fetches the ERA5 reference once; the second writes `config/solar_calibration.json` and `data/processed/ghi_hourly.csv` (method in `docs/decisions/0006-light-sensor-calibration.md`):
+
+```bash
+python scripts/fetch_solar_reference.py --start 2026-08-28 --end 2026-09-15
+```
+
+```bash
+python -m joto_guard calibrate-light --reference data/reference/open_meteo_era5_2026-08-28_2026-09-15.json
+```
+
 Tests and lint:
 
 ```bash
