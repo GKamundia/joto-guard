@@ -2,12 +2,14 @@
 
 python -m joto_guard calibrate-light --reference <file>
 python -m joto_guard wbgt
+python -m joto_guard forecast
 """
 
 import argparse
 import json
 import sys
 from collections.abc import Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -16,6 +18,7 @@ from conduit_sentinel.audit import is_night
 from conduit_sentinel.config import load_config
 from conduit_sentinel.pipeline import csv_ready
 
+from .forecast import DEFAULT_MODEL, FORECAST_URL, fetch_json, forecast_wbgt, request_params
 from .solar_calibration import calibrate, ghi_hourly, load, reference_from_open_meteo, save
 from .station_wbgt import firmware_by_local_hour, mean_difference, wbgt_hourly
 from .wbgt import REFERENCE_HEIGHT_M
@@ -24,6 +27,9 @@ DEFAULT_REFERENCE_NAME = "ERA5 hourly shortwave radiation, Open-Meteo archive AP
 
 # Local hours summarised as "midday" in the firmware comparison.
 MIDDAY_HOURS = range(10, 16)
+
+# Local days with fewer forecast hours than this are not summarised.
+MIN_HOURS_PER_DAY = 12
 
 PROCESSED_HELP = "Sentinel's obs_hourly.csv and report.json (default: data/processed)"
 
@@ -71,6 +77,38 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="anemometer height in metres (default 2, which needs no adjustment)",
     )
     wbgt.set_defaults(handler=station_wbgt)
+
+    forecast = commands.add_parser(
+        "forecast",
+        help="forecast hourly WBGT at the station from Open-Meteo",
+        description="Fetch an hourly weather forecast for the station and compute its WBGT "
+        "the same way as the station's.",
+    )
+    forecast.add_argument(
+        "--processed", type=Path, default=Path("data/processed"), help=PROCESSED_HELP
+    )
+    forecast.add_argument("--days", type=int, default=3, help="days ahead, 1 to 16 (default 3)")
+    forecast.add_argument(
+        "--model", default=DEFAULT_MODEL, help=f"Open-Meteo model (default {DEFAULT_MODEL})"
+    )
+    forecast.add_argument(
+        "--payload",
+        type=Path,
+        help="compute from a saved Open-Meteo response instead of fetching a new one",
+    )
+    forecast.add_argument(
+        "--config",
+        type=Path,
+        default=Path("config/qc_rules.yaml"),
+        help="Sentinel configuration, for the local time zone",
+    )
+    forecast.add_argument(
+        "--raw-dir",
+        type=Path,
+        default=Path("data/reference"),
+        help="where a fetched response is saved (default: data/reference)",
+    )
+    forecast.set_defaults(handler=station_forecast)
 
     args = parser.parse_args(argv)
     try:
@@ -165,6 +203,46 @@ def station_wbgt(args: argparse.Namespace) -> int:
         f"{mean_difference(by_hour, night_hours):+.1f} degC at night"
     )
     print(f"Wrote {table_path} and {by_hour_path}")
+    return 0
+
+
+def station_forecast(args: argparse.Namespace) -> int:
+    report = json.loads((args.processed / "report.json").read_text(encoding="utf-8"))
+    station = report["station"]
+    latitude, longitude = station["latitude"], station["longitude"]
+
+    if args.payload:
+        payload = json.loads(args.payload.read_text(encoding="utf-8"))
+        source = args.payload
+    else:
+        if not 1 <= args.days <= 16:
+            raise ValueError("--days must be from 1 to 16")
+        params = request_params(
+            latitude, longitude, station["elevation_m"], args.model, forecast_days=args.days
+        )
+        payload = fetch_json(FORECAST_URL, params)
+        fetched = datetime.now(UTC)
+        args.raw_dir.mkdir(parents=True, exist_ok=True)
+        source = args.raw_dir / f"open_meteo_{args.model}_forecast_{fetched:%Y%m%dT%H%MZ}.json"
+        source.write_text(json.dumps(payload), encoding="utf-8")
+
+    table = forecast_wbgt(payload, latitude, longitude)
+    out = args.processed / "wbgt_forecast.csv"
+    csv_ready(table).to_csv(out, index=False)
+
+    timezone = load_config(args.config).station.display_timezone
+    local = table["hour_utc"].dt.tz_convert(timezone)
+    print(f"Forecast from {source}: {len(table)} hours")
+    for day, hours in table.groupby(local.dt.date):
+        if len(hours) < MIN_HOURS_PER_DAY:
+            continue
+        peak = hours.loc[hours["wbgt_c"].idxmax()]
+        print(
+            f"  {day}: highest WBGT {peak['wbgt_c']:.1f} degC at "
+            f"{peak['hour_utc'].tz_convert(timezone):%H:%M} ({len(hours)} hours)"
+        )
+    print("Raw model output, not yet corrected to the station")
+    print(f"Wrote {out}")
     return 0
 
 
