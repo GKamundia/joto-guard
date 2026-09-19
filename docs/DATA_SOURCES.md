@@ -31,7 +31,8 @@ Record every dataset the app uses: where it came from, when it was obtained, its
 | `config/solar_calibration.json` | `obs_hourly.csv` and the ERA5 reference below | `python -m joto_guard calibrate-light --reference data/reference/open_meteo_era5_2026-08-28_2026-09-15.json`. Tracked, so the calibration applies without the network. Method and skill in `decisions/0006-light-sensor-calibration.md`. |
 | `data/processed/ghi_hourly.csv` | `obs_hourly.csv` and `config/solar_calibration.json` | Written by the same command. Not tracked. |
 | `data/processed/wbgt_hourly.csv`, `wbgt_firmware_by_hour.csv` | `obs_hourly.csv`, `report.json` and `config/solar_calibration.json` | `python -m joto_guard wbgt`. Method in `decisions/0007-liljegren-wbgt.md`. Not tracked. |
-| `data/processed/wbgt_forecast.csv` | An Open-Meteo forecast response (below) and `report.json` | `python -m joto_guard forecast`, which also saves the response in `data/reference/`. Raw model output, not corrected to the station. Not tracked. |
+| `data/processed/wbgt_forecast.csv` | An Open-Meteo forecast response (below), `report.json` and `config/forecast_correction.json` | `python -m joto_guard forecast`, which also saves the response in `data/reference/`. Raw and corrected WBGT with the uncertainty band. Not tracked. |
+| `config/forecast_correction.json` | `wbgt_hourly.csv` and the past forecasts below | `python -m joto_guard fit-correction --past-forecasts data/reference/open_meteo_ecmwf_ifs_past_forecasts_2026-08-28_2026-09-15.json`. Tracked, so the correction applies without the past forecasts. Method and skill in `decisions/0010-forecast-correction.md`. |
 
 ## External sources (add as used)
 

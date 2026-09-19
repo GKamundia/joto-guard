@@ -116,10 +116,14 @@ Forecast WBGT for the next three days from ECMWF's IFS model, computed the same 
 python -m joto_guard forecast
 ```
 
-The raw forecast reads about 2 °C below the station at midday, so it is not yet shown as guidance. The past forecasts the correction learns from are downloaded with:
+The raw forecast reads about 2 °C below the station at midday, so `forecast` corrects it by hour of day with `config/forecast_correction.json` and adds an uncertainty band (decision 0010). On days left out of the fit, the correction cut the mean absolute error from 1.46 to 1.07 °C (from 2.58 to 1.62 °C at midday). To refit it, download the past forecasts and fit:
 
 ```bash
 python scripts/fetch_past_forecasts.py --start 2026-08-28 --end 2026-09-15
+```
+
+```bash
+python -m joto_guard fit-correction --past-forecasts data/reference/open_meteo_ecmwf_ifs_past_forecasts_2026-08-28_2026-09-15.json
 ```
 
 Tests and lint:
