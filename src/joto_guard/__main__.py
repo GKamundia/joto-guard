@@ -19,7 +19,7 @@ from conduit_sentinel.audit import is_night
 from conduit_sentinel.config import load_config
 from conduit_sentinel.pipeline import csv_ready
 
-from . import bands, bias
+from . import bands, bias, verify
 from .forecast import (
     DEFAULT_MODEL,
     FORECAST_URL,
@@ -156,6 +156,32 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     correction.add_argument("--out", type=Path, default=Path("config/forecast_correction.json"))
     correction.set_defaults(handler=fit_correction)
+
+    check = commands.add_parser(
+        "verify",
+        help="check the forecast against the station at the level, not just the temperature",
+        description="Score the corrected forecast on days left out of its fit: the error, how "
+        "often the level it implies matches the one the station justified, and how often it "
+        "said an hour was safer than it was.",
+    )
+    check.add_argument(
+        "--processed", type=Path, default=Path("data/processed"), help=PROCESSED_HELP
+    )
+    check.add_argument(
+        "--past-forecasts",
+        type=Path,
+        required=True,
+        help="Open-Meteo response saved by scripts/fetch_past_forecasts.py",
+    )
+    check.add_argument(
+        "--config",
+        type=Path,
+        default=Path("config/qc_rules.yaml"),
+        help="Sentinel configuration, for the local time zone",
+    )
+    check.add_argument("--guidance", type=Path, default=Path("config/heat_guidance.yaml"))
+    check.add_argument("--out", type=Path, default=Path("data/processed/verification.json"))
+    check.set_defaults(handler=run_verify)
 
     args = parser.parse_args(argv)
     try:
@@ -326,7 +352,8 @@ def station_forecast(args: argparse.Namespace) -> int:
     return 0
 
 
-def fit_correction(args: argparse.Namespace) -> int:
+def _pairs_from(args: argparse.Namespace) -> tuple[pd.DataFrame, str, list[int]]:
+    """Station hours paired with the archived forecasts made 0 to 3 days before them."""
     report = json.loads((args.processed / "report.json").read_text(encoding="utf-8"))
     station = pd.read_csv(args.processed / "wbgt_hourly.csv")
     station["hour_utc"] = pd.to_datetime(station["hour_utc"], utc=True)
@@ -336,7 +363,47 @@ def fit_correction(args: argparse.Namespace) -> int:
     latitude, longitude = report["station"]["latitude"], report["station"]["longitude"]
     leads = [day for day in range(8) if variable_name("temperature_2m", day) in payload["hourly"]]
     forecasts = {day: forecast_wbgt(payload, latitude, longitude, day) for day in leads}
-    correction = bias.fit(bias.pair_forecasts(station, forecasts, timezone), args.model, timezone)
+    return bias.pair_forecasts(station, forecasts, timezone), timezone, leads
+
+
+def run_verify(args: argparse.Namespace) -> int:
+    pairs, _, leads = _pairs_from(args)
+    guidance = bands.load_guidance(args.guidance)
+    result = verify.verify(pairs, guidance)
+
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+
+    error = result["error_c"]
+    print(
+        f"{result['n_hours']} hours over {result['n_days']} days, forecasts made "
+        f"{leads[0]} to {leads[-1]} days ahead, each day left out of the fit"
+    )
+    print(
+        f"WBGT error: mean absolute {error['mae']:g}, RMSE {error['rmse']:g}, "
+        f"bias {error['bias']:+g}, 90th percentile {error['p90_abs']:g}, "
+        f"worst {error['worst_abs']:g} degC"
+    )
+    print("\nDoes it get the level right?")
+    print(f"{'work type':12s} {'exact':>7s} {'said safer':>11s} {'said worse':>11s}")
+    for work_type, row in result["levels"].items():
+        print(
+            f"{work_type:12s} {row['exact_pct']:6.1f}% {row['under_warned_pct']:10.1f}% "
+            f"{row['over_warned_pct']:10.1f}%"
+        )
+    print("\nIf the band's upper edge were the warning instead of the central value")
+    for work_type, row in result["levels_from_band_top"].items():
+        print(
+            f"{work_type:12s} {row['exact_pct']:6.1f}% {row['under_warned_pct']:10.1f}% "
+            f"{row['over_warned_pct']:10.1f}%"
+        )
+    print(f"\nWrote {args.out}")
+    return 0
+
+
+def fit_correction(args: argparse.Namespace) -> int:
+    pairs, timezone, leads = _pairs_from(args)
+    correction = bias.fit(pairs, args.model, timezone)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     bias.save(correction, args.out)
 

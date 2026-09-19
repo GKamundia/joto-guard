@@ -9,7 +9,7 @@ export default function ChannelStatus({ rows, rules }) {
 
   const explain = (cell) =>
     cell.rules.length
-      ? `${cell.group} on ${cell.date_utc}: ${cell.status} — ${cell.rules
+      ? `${cell.group} on ${cell.date_utc}: ${cell.status}: ${cell.rules
           .map((rule) => `${rule} ${rules[rule] ?? ""}`.trim())
           .join("; ")}`
       : `${cell.group} on ${cell.date_utc}: ${cell.status}`;

@@ -77,18 +77,18 @@ function HourDetail({ hour, workType, guidance }) {
         </div>
         <div>
           <dt>Level</dt>
-          <dd>{LEVEL_NAMES[advice.level] ?? "—"}</dd>
+          <dd>{LEVEL_NAMES[advice.level] ?? "-"}</dd>
         </div>
         <div>
           <dt>Used to the heat</dt>
           <dd>
-            {advice.work_minutes_acclimatized ?? "—"} min<small> work per hour</small>
+            {advice.work_minutes_acclimatized ?? "-"} min<small> work per hour</small>
           </dd>
         </div>
         <div>
           <dt>New workers</dt>
           <dd>
-            {advice.work_minutes_new_workers ?? "—"} min<small> work per hour</small>
+            {advice.work_minutes_new_workers ?? "-"} min<small> work per hour</small>
           </dd>
         </div>
       </dl>

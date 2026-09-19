@@ -46,9 +46,9 @@ def start_message(document: dict[str, Any]) -> str:
             "temperature from its own sensors, forecasts it three days ahead and checks it "
             "against NIOSH's heat limits for the type of work.",
             "",
-            "/now — this hour",
-            "/today — the rest of today",
-            "/tomorrow — tomorrow",
+            "/now: this hour",
+            "/today: the rest of today",
+            "/tomorrow: tomorrow",
             "",
             f"Add a type of work to any command, for example /today light. "
             f"Without one it answers for {WORK_NAMES[DEFAULT_WORK_TYPE].lower()}: "

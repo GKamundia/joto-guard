@@ -54,7 +54,7 @@ export default function StationRecord({ wbgt, failure }) {
           of inputs; the rest are left empty rather than filled, which is why the line breaks. The
           warmest hour was{" "}
           <strong>
-            {number(warmest?.wbgt_c)} °C on {warmest ? label(warmest.hour_utc, true) : "—"}
+            {number(warmest?.wbgt_c)} °C on {warmest ? label(warmest.hour_utc, true) : "-"}
           </strong>
           .
         </p>

@@ -29,7 +29,7 @@ export default function StationMap({ station }) {
     <section className="card">
       <h2>Where it stands</h2>
       <p className="lead">
-        {station.site}, Juja, Kiambu — {station.latitude}, {station.longitude}, at{" "}
+        {station.site}, Juja, Kiambu. {station.latitude}, {station.longitude}, at{" "}
         {station.elevation_m} m.
       </p>
       <div id="map" ref={container} />

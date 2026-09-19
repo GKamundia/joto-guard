@@ -8,7 +8,7 @@ All development for this submission took place from 17 to 21 September 2026. The
 
 **Joto Guard** (*joto* is Kiswahili for heat).
 
-> Hour by hour, which outdoor work is safe around Juja — from the Conduit@Empathy1 station's own sensors, after we found the heat-stress index it publishes could not be used to warn anyone, and rebuilt it.
+> Hour by hour, which outdoor work is safe around Juja, from the Conduit@Empathy1 station's own sensors, after we found the heat-stress index it publishes could not be used to warn anyone, and rebuilt it.
 
 ## 2. Problem statement
 
@@ -39,7 +39,7 @@ A foreman starting a concrete pour, a farm supervisor planning a harvest day, or
 
 Three things make the answer worth trusting, and all three come from the station:
 
-1. **The station's own heat-stress index is wrong, and we show it.** Its firmware WBGT column reads **6.1 °C below** a standards-grade value between 10:00 and 15:59 — it behaves as if the sun were not shining. Nobody could have been warned with it. We rebuilt WBGT with the Liljegren et al. (2008) model from the station's own temperature, humidity, pressure, wind and light sensors.
+1. **The station's own heat-stress index is wrong, and we show it.** Its firmware WBGT column reads **6.1 °C below** a standards-grade value between 10:00 and 15:59. It behaves as if the sun were not shining. Nobody could have been warned with it. We rebuilt WBGT with the Liljegren et al. (2008) model from the station's own temperature, humidity, pressure, wind and light sensors.
 2. **Every number passes quality control first.** Sixteen rules flag every reading before it is used, and the Station Health Report publishes what they found, including five faults we are reporting back to JHUB.
 3. **The forecast is corrected towards the station.** A raw ECMWF forecast runs about 2 °C cool at midday here. Corrected against the station's own record it is right to 1.07 °C on days it never saw, and it carries an uncertainty band.
 
@@ -65,28 +65,28 @@ The station is also the subject of the **Station Health Report**, which publishe
 
 The dashboard has five tabs, each linkable (`#guidance`, `#forecast`, `#station`, `#health`, `#method`).
 
-**Guidance** — the product.
+**Guidance**, the product.
 
 - **Right now**: the current hour's level, its WBGT with the band, and the minutes of work the hour allows for workers used to the heat and for new workers, with the next spell needing care.
 - **Heat guidance for the next three days**, hour by hour, for light, moderate, heavy and very heavy work. Choose a day to see all of it, choose an hour for its detail.
 - **English and Kiswahili** for every level and every piece of advice.
 - **An uncertainty band** on every forecast hour, and a "could reach the next level" marker when the upper band crosses into a stricter level.
 
-**Forecast** — the three days in full.
+**Forecast**, the three days in full.
 
 - The corrected WBGT as a chart with its band, the raw forecast beside it, and the NIOSH limits for the chosen work type drawn across it. Point anywhere to read the hour.
 - **How much the correction helps**: mean absolute error for the raw forecast, the corrected forecast and a climatological baseline, for all hours, for midday, and at each lead day. Corrected beats both everywhere: 1.07 °C against 1.46 raw and 1.38 baseline.
 - **The weather behind the index**: the forecast air temperature, humidity, wind, solar, globe temperature and natural wet bulb the model solves WBGT from.
 
-**Station record** — what the instrument actually measured.
+**Station record**, what the instrument actually measured.
 
 - Every hour of the record as a chart, switchable between WBGT, air temperature, humidity, wind, solar, globe temperature and natural wet bulb. The WBGT view draws the station's own column beneath ours, so the 6.1 °C midday gap is visible directly. Gaps in the record break the line rather than being joined across.
 - The light-sensor calibration with its held-out scores, stated plainly as the weakest link.
 - The firmware WBGT gap by hour of day, the rain gauges, and the device codes.
 
-**Station health** — coverage calendar, daily health score, sensor-group status, three-thermometer agreement, an audit of the station's own calculated columns, five repairs recommended to JHUB, and every table as a download.
+**Station health**: coverage calendar, daily health score, sensor-group status, three-thermometer agreement, an audit of the station's own calculated columns, five repairs recommended to JHUB, and every table as a download.
 
-**Method** — how a reading becomes advice, step by step, what the service cannot tell you, and the sources.
+**Method**: how a reading becomes advice, step by step, what the service cannot tell you, and the sources.
 
 Throughout:
 - **A Telegram bot**: `/now`, `/today`, `/tomorrow`, with an optional work type.
@@ -103,7 +103,7 @@ Throughout:
 | API | FastAPI, Uvicorn |
 | Web | React 19, Vite, Leaflet. Charts are hand-drawn SVG with pointer tracking, so there is no chart library to pull in |
 | Bot | python-telegram-bot, httpx |
-| Tests and lint | pytest (321 tests), ruff, GitHub Actions |
+| Tests and lint | pytest (326 tests), ruff, GitHub Actions |
 | Packaging | Docker, Docker Compose; Render for the API, Vercel for the page |
 | External data | Open-Meteo (ECMWF IFS forecast, ERA5 archive) |
 
@@ -251,7 +251,7 @@ Full provenance, with dates obtained and terms, is in [`docs/DATA_SOURCES.md`](d
 |---|---|---|
 | **Conduit@Empathy1**, CHORDS instrument 61 on the UCAR 3D-PAWS FEWS NET portal (`3d-fewsnet.icdp.ucar.edu`), lat −1.099736, lon 37.014528, 1,523 m | Every station measurement the project uses. Three GeoCSV exports from the organisers' Resources page, 28 Aug to 15 Sep 2026 | Attributed to `3d-fewsnet.icdp.ucar.edu`, as the export header asks |
 | CHORDS platform software | The portal the station publishes through. Daniels, M. et al. (2014), *CHORDS software* v0.9, UCAR, doi:10.5065/D6V1236Q | The DOI in every export identifies the **software**, not this station's data. No dataset DOI exists for the station |
-| **Open-Meteo** — ECMWF IFS forecast, historical forecast archive, ERA5 archive | The three-day forecast, the archived forecasts the correction is fitted on, and the irradiance reference for the light calibration | CC BY 4.0, no key required |
+| **Open-Meteo**: ECMWF IFS forecast, historical forecast archive, ERA5 archive | The three-day forecast, the archived forecasts the correction is fitted on, and the irradiance reference for the light calibration | CC BY 4.0, no key required |
 | NIOSH (2016), *Criteria for a Recommended Standard: Occupational Exposure to Heat and Hot Environments*, 2016-106 | The heat limits and the work/rest rule | US government work, public domain |
 | Herrmann, S. D. et al. (2024), *2024 Adult Compendium of Physical Activities* | The metabolic rates that place real tasks in the four workload categories | Cited per the compendium's terms |
 | Liljegren, J. C. et al. (2008), WBGT model v1.1, Argonne National Laboratory | The physics `src/joto_guard/wbgt.py` adapts | See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) |
@@ -262,11 +262,11 @@ NASA POWER was in the plan as the irradiance reference but returned only fill va
 
 ## 11. AI usage
 
-The AI tool used was Anthropic's Claude (Claude Code, and Claude in Cowork during planning), for writing code, tests and documentation, for debugging, and for research and data analysis. Every change was reviewed and run by the team, and each member can explain the code. The full log — what was used on which day, for what, and which files it touched — is in [`docs/AI_USAGE.md`](docs/AI_USAGE.md).
+The AI tool used was Anthropic's Claude (Claude Code, and Claude in Cowork during planning), for writing code, tests and documentation, for debugging, and for research and data analysis. Every change was reviewed and run by the team, and each member can explain the code. The full log, covering what was used on which day, for what, and which files it touched, is in [`docs/AI_USAGE.md`](docs/AI_USAGE.md).
 
 ## 12. Screenshots / demo
 
-Demo video: _TBD — add the unlisted link before submitting._
+Demo video: _TBD: add the unlisted link before submitting._
 
 **Guidance.** The hour you are in, then the next three days for the chosen kind of work, in English and Kiswahili. Choose a day to see all of it, or an hour for its detail.
 
@@ -280,7 +280,7 @@ Demo video: _TBD — add the unlisted link before submitting._
 
 ![The station record tab](docs/figures/03-station-record.png)
 
-**Station health.** What the station is, how much of the record it delivered, and its daily score — with the five repairs we are sending back to JHUB further down the tab.
+**Station health.** What the station is, how much of the record it delivered, and its daily score, with the five repairs we are sending back to JHUB further down the tab.
 
 ![The station health tab](docs/figures/04-station-health.png)
 
@@ -295,7 +295,7 @@ The figures are screenshots of the running page, taken at 1,280 px wide. To rege
 | Name | Role |
 |---|---|
 | George Kamundia | Data, quality control, physics and models: Conduit Sentinel, the light calibration, the WBGT model, the forecast correction and the heat guidance |
-| _TBD — teammate's name_ | _TBD — role_ |
+| _TBD: teammate's name_ | _TBD: role_ |
 
 Both members are registered on Devpost and appear in the demo video.
 
@@ -321,8 +321,11 @@ We would rather state these than have a judge find them.
 - **The record is 19 days of cool season, not a year.** The exports cover 28 Aug to 15 Sep 2026 with a six-day hole (5–10 Sep), and air temperature never passed 28.5 °C. January to March, Kenya's hot season, is not in the data at all. Every number here describes a cool-season fortnight.
 - **The nowcast is missing, because the data is not live.** A new CHORDS portal account starts as a guest; downloading needs permissions a portal administrator grants, and ours had not been granted by 19 Sep 2026. The service therefore runs on the organisers' exports and forecasts forward, rather than reporting the current hour.
 - **WBGT is available for 312 of the record's 456 hours.** The rest lack a quality-controlled input, mostly inside the six-day gap. We leave those hours empty rather than filling them.
-- **The light calibration is the weakest link in the chain.** Held out day by day it reaches R² 0.67 across daylight but only 0.30 with the sun above 30°, RMSE 155 W/m². Much of that is the station seeing its own cloud while ERA5 averages a 25 km cell — under a clear reference sky the error halves and R² is 0.91. Still, ±155 W/m² moves WBGT by about ±1.2 °C at midday, and NIOSH's limits are only 1.5 to 3 °C apart, so a level near a boundary can be wrong. [Decision 0007](docs/decisions/0007-liljegren-wbgt.md) gives the full sensitivity table.
+- **The light calibration is the weakest link in the chain.** Held out day by day it reaches R² 0.67 across daylight but only 0.30 with the sun above 30°, RMSE 155 W/m². Much of that is the station seeing its own cloud while ERA5 averages a 25 km cell; under a clear reference sky the error halves and R² is 0.91. Still, ±155 W/m² moves WBGT by about ±1.2 °C at midday, and NIOSH's limits are only 1.5 to 3 °C apart, so a level near a boundary can be wrong. [Decision 0007](docs/decisions/0007-liljegren-wbgt.md) gives the full sensitivity table.
 - **WBGT is modelled, not measured.** The station has no black-globe thermometer, so globe temperature is solved rather than observed. That is why we recommend one to JHUB.
+- **The forecast gets the level wrong about one hour in seven, and errs towards "safe".** Scored on days left out of its fit, the corrected forecast puts an hour in exactly the right level 86.3 % of the time for heavy work, says it is **safer than it turned out on 7.3 %** of hours, and worse than it turned out on 6.4 %. Under-warning is the error that can hurt somebody, and for very heavy work it reaches 8.4 % and can be wrong by two levels. `python -m joto_guard verify` prints the table; [decision 0012](docs/decisions/0012-verifying-the-level-not-the-degree.md) explains why we still show the central value rather than the band's upper edge, which would cut under-warning to 0.2 % but over-warn one hour in five.
+- **The correction fixes the average, not the tail.** Bias falls to zero and mean absolute error to 1.07 °C, but the 90th percentile error is 2.50 °C and the worst is 6.83 °C, slightly worse than the raw forecast's worst.
+- **The error sits where the decision is made.** 0.4 to 0.9 °C overnight, but 1.5 to 2.2 °C between 08:00 and 16:00, peaking at 08:00, which is when a supervisor plans the day.
 - **The forecast correction is fitted on 15 days.** It beats the station's own climatology at every lead day (1.07 °C against 1.38 °C), but its uncertainty band covered the station on 78.9 % of hours, not the 80 % it targets. It should be refitted as the record grows: `python -m joto_guard fit-correction`.
 - **The sensor faults are reported at the confidence we have.** Rain Gauge 2 is a *suspected* fault from a single rainy day, not a confirmed one. The empty battery channel may be an export setting rather than a dead sensor. The health report labels each one.
 - **No study has measured heat stress in Juja itself.** The evidence for who works outdoors there is the county's own development plan and local quarrying studies; the worker-heat evidence comes from Mombasa, Tana River and Siaya. [`docs/PROBLEM_EVIDENCE.md`](docs/PROBLEM_EVIDENCE.md) section 7 lists every gap.
@@ -350,8 +353,14 @@ The first two are deterministic: given the three exports in `data/raw/organiser/
 
 The fitted constants are tracked, not regenerated on each run, so a rerun cannot silently change them: [`config/solar_calibration.json`](config/solar_calibration.json) and [`config/forecast_correction.json`](config/forecast_correction.json), each with its held-out scores. Refit them with `python -m joto_guard calibrate-light` and `python -m joto_guard fit-correction` when more data arrives.
 
+Check the forecast against the station at the level a supervisor acts on, not just in degrees:
+
+```bash
+python -m joto_guard verify --past-forecasts data/reference/open_meteo_ecmwf_ifs_past_forecasts_2026-08-28_2026-09-15.json
+```
+
 ```bash
 pytest && ruff check src tests bot && ruff format --check src tests bot
 ```
 
-321 tests, run on Python 3.11 and 3.13 in GitHub Actions on every push. They use fixtures cut from the real exports and never touch the network.
+326 tests, run on Python 3.11 and 3.13 in GitHub Actions on every push. They use fixtures cut from the real exports and never touch the network.

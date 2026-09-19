@@ -109,7 +109,7 @@ export default function App() {
           <div className="masthead">
             <div>
               <h1>Joto Guard</h1>
-              <p>When outdoor work around JKUAT, Juja gets too hot — and how far the station can be trusted.</p>
+              <p>When outdoor work around JKUAT, Juja gets too hot, and how far the station can be trusted.</p>
             </div>
             <dl className="masthead-facts">
               <div>
@@ -124,7 +124,7 @@ export default function App() {
               </div>
               <div>
                 <dt>Health</dt>
-                <dd>{report.health.daily.at(-1)?.score ?? "—"} / 100</dd>
+                <dd>{report.health.daily.at(-1)?.score ?? "-"} / 100</dd>
               </div>
             </dl>
           </div>

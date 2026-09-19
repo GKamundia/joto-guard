@@ -80,7 +80,7 @@ export default function Audits({ audits, thermometers }) {
                 <td className="number">{number(pair.mean_abs_diff_c, 3)} °C</td>
                 <td className="number">{number(pair.max_abs_diff_c, 3)} °C</td>
                 <td className="number">
-                  {signed.has(pair.pair) ? `${number(signed.get(pair.pair), 3)} °C` : "—"}
+                  {signed.has(pair.pair) ? `${number(signed.get(pair.pair), 3)} °C` : "-"}
                 </td>
               </tr>
             ))}

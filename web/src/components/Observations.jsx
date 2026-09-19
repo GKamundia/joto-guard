@@ -109,7 +109,7 @@ export default function Observations({ rain, light, codes, calibration }) {
                   <td>{stamp(code.last_utc)}</td>
                   <td className="number">
                     {code.median_interval_before_s === null
-                      ? "—"
+                      ? "-"
                       : `${number(code.median_interval_before_s, 0)} s`}
                   </td>
                 </tr>

@@ -76,14 +76,14 @@ export default function NowCard({ guidance, workType }) {
           <div>
             <dt>Work in this hour</dt>
             <dd>
-              {advice?.work_minutes_acclimatized ?? "—"} min
+              {advice?.work_minutes_acclimatized ?? "-"} min
               <small> used to the heat</small>
             </dd>
           </div>
           <div>
             <dt>New workers</dt>
             <dd>
-              {advice?.work_minutes_new_workers ?? "—"} min
+              {advice?.work_minutes_new_workers ?? "-"} min
               <small> in this hour</small>
             </dd>
           </div>

@@ -7,7 +7,7 @@ const HEIGHT = 260;
 /** The comparison series' value at the same hour, or a dash where it has none. */
 function compareAt(series, x, unit) {
   const found = series.find((point) => point.x === x);
-  return Number.isFinite(found?.y) ? `${found.y.toFixed(1)} ${unit}` : "—";
+  return Number.isFinite(found?.y) ? `${found.y.toFixed(1)} ${unit}` : "-";
 }
 
 /** Nice round step for an axis covering `span` in about `target` steps. */
