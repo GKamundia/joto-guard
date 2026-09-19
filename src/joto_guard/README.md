@@ -10,7 +10,8 @@ Hourly heat-stress guidance for Juja, built on the Conduit Sentinel outputs (dec
 | `station_wbgt.py` | The station's hourly WBGT from the Sentinel outputs, and the firmware column compared by hour of day | done |
 | `forecast.py` | The same WBGT from an ECMWF IFS forecast through Open-Meteo (decision 0009) | done |
 | `bias.py` | Forecast correction towards the station by local hour, with an uncertainty band judged on days left out (decision 0010) | done |
-| `bands.py` | Heat limits and advice by type of work (NIOSH) | next |
+| `bands.py` | NIOSH heat limits by type of work, allowed work minutes per hour and levels (decision 0011) | done |
+| `guidance.py` | The heat guidance document the API and bot serve (`heat_guidance.json`) | done |
 
 ```bash
 python scripts/fetch_solar_reference.py --start 2026-08-28 --end 2026-09-15
@@ -21,6 +22,6 @@ python scripts/fetch_past_forecasts.py --start 2026-08-28 --end 2026-09-15
 python -m joto_guard fit-correction --past-forecasts data/reference/open_meteo_ecmwf_ifs_past_forecasts_2026-08-28_2026-09-15.json
 ```
 
-The second command writes `config/solar_calibration.json` (tracked) and `data/processed/ghi_hourly.csv`. The third needs only the Sentinel outputs and that tracked calibration; it writes `data/processed/wbgt_hourly.csv` and `data/processed/wbgt_firmware_by_hour.csv`. Pass `--wind-height` once the anemometer height is known. `forecast` fetches the next three days, saves the response in `data/reference/` and writes `data/processed/wbgt_forecast.csv` with the corrected WBGT and its band. `fit-correction` refits `config/forecast_correction.json` (tracked) from the past forecasts the script saves.
+The second command writes `config/solar_calibration.json` (tracked) and `data/processed/ghi_hourly.csv`. The third needs only the Sentinel outputs and that tracked calibration; it writes `data/processed/wbgt_hourly.csv` and `data/processed/wbgt_firmware_by_hour.csv`. Pass `--wind-height` once the anemometer height is known. `forecast` fetches the next three days, saves the response in `data/reference/` and writes `data/processed/wbgt_forecast.csv` with the corrected WBGT and its band. `fit-correction` refits `config/forecast_correction.json` (tracked) from the past forecasts the script saves. `forecast` also writes `data/processed/heat_guidance.json`: for every forecast hour and type of work, the level and the minutes of work allowed per hour, from the NIOSH limits in `config/heat_guidance.yaml`.
 
 `wbgt.py` adapts Liljegren's WBGT version 1.1 (Copyright © 2008, UChicago Argonne, LLC); its licence is in `THIRD_PARTY_NOTICES.md`.

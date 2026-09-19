@@ -32,6 +32,7 @@ Record every dataset the app uses: where it came from, when it was obtained, its
 | `data/processed/ghi_hourly.csv` | `obs_hourly.csv` and `config/solar_calibration.json` | Written by the same command. Not tracked. |
 | `data/processed/wbgt_hourly.csv`, `wbgt_firmware_by_hour.csv` | `obs_hourly.csv`, `report.json` and `config/solar_calibration.json` | `python -m joto_guard wbgt`. Method in `decisions/0007-liljegren-wbgt.md`. Not tracked. |
 | `data/processed/wbgt_forecast.csv` | An Open-Meteo forecast response (below), `report.json` and `config/forecast_correction.json` | `python -m joto_guard forecast`, which also saves the response in `data/reference/`. Raw and corrected WBGT with the uncertainty band. Not tracked. |
+| `data/processed/heat_guidance.json` | `wbgt_forecast.csv` and `config/heat_guidance.yaml` | Written by `python -m joto_guard forecast`. Levels and allowed work minutes per hour for each type of work (decision 0011). Not tracked. |
 | `config/forecast_correction.json` | `wbgt_hourly.csv` and the past forecasts below | `python -m joto_guard fit-correction --past-forecasts data/reference/open_meteo_ecmwf_ifs_past_forecasts_2026-08-28_2026-09-15.json`. Tracked, so the correction applies without the past forecasts. Method and skill in `decisions/0010-forecast-correction.md`. |
 
 ## External sources (add as used)

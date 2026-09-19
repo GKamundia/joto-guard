@@ -116,7 +116,7 @@ Forecast WBGT for the next three days from ECMWF's IFS model, computed the same 
 python -m joto_guard forecast
 ```
 
-The raw forecast reads about 2 °C below the station at midday, so `forecast` corrects it by hour of day with `config/forecast_correction.json` and adds an uncertainty band (decision 0010). On days left out of the fit, the correction cut the mean absolute error from 1.46 to 1.07 °C (from 2.58 to 1.62 °C at midday). To refit it, download the past forecasts and fit:
+The raw forecast reads about 2 °C below the station at midday, so `forecast` corrects it by hour of day with `config/forecast_correction.json` and adds an uncertainty band (decision 0010). On days left out of the fit, the correction cut the mean absolute error from 1.46 to 1.07 °C (from 2.58 to 1.62 °C at midday). It then applies NIOSH's heat limits for light, moderate, heavy and very heavy work (decision 0011) and writes `data/processed/heat_guidance.json`: for each hour, whether new and acclimatized workers can work through it, and how many minutes of work per hour keep within the limit. To refit the correction, download the past forecasts and fit:
 
 ```bash
 python scripts/fetch_past_forecasts.py --start 2026-08-28 --end 2026-09-15
