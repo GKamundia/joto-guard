@@ -15,6 +15,12 @@ const LEVEL_NAMES = {
   reschedule: "Reschedule",
 };
 
+const ADVICE_ORDER = [
+  ["water", "Water."],
+  ["new_workers", "New workers."],
+  ["rest", "Rest."],
+];
+
 const MIN_HOURS_PER_DAY = 12;
 const HOURS_SHOWN = 48;
 
@@ -34,7 +40,7 @@ function hourTitle(hour, advice) {
   return parts.join(" · ");
 }
 
-function DaySummary({ day, workType }) {
+function DaySummary({ day, workType, swahili }) {
   const summary = day.by_work_type[workType];
   if (!summary || summary.hours < MIN_HOURS_PER_DAY) return null;
   let advice = "No limit reached.";
@@ -52,6 +58,9 @@ function DaySummary({ day, workType }) {
         up to {number(summary.peak_wbgt_c)} °C at {summary.peak_time}
       </span>
       <span>{advice}</span>
+      <span className="sw" lang="sw">
+        {swahili.levels[summary.worst_level]}
+      </span>
     </div>
   );
 }
@@ -74,6 +83,7 @@ export default function HeatGuidance({ guidance, error }) {
     .filter((hour) => Date.parse(hour.hour_utc) + 3600 * 1000 > now)
     .slice(0, HOURS_SHOWN);
   const corrected = guidance.forecast.corrected_towards_station;
+  const swahili = guidance.swahili;
 
   return (
     <section className="card">
@@ -93,6 +103,7 @@ export default function HeatGuidance({ guidance, error }) {
             onClick={() => setWorkType(name)}
           >
             {WORK_NAMES[name] ?? name}
+            <small lang="sw">{swahili.work_types[name]}</small>
           </button>
         ))}
       </div>
@@ -104,7 +115,7 @@ export default function HeatGuidance({ guidance, error }) {
 
       <div className="guidance-days">
         {guidance.days.map((day) => (
-          <DaySummary key={day.date} day={day} workType={workType} />
+          <DaySummary key={day.date} day={day} workType={workType} swahili={swahili} />
         ))}
       </div>
 
@@ -134,15 +145,14 @@ export default function HeatGuidance({ guidance, error }) {
       </div>
 
       <ul className="advice">
-        <li>
-          <strong>Water.</strong> {guidance.advice.water}
-        </li>
-        <li>
-          <strong>New workers.</strong> {guidance.advice.new_workers}
-        </li>
-        <li>
-          <strong>Rest.</strong> {guidance.advice.rest}
-        </li>
+        {ADVICE_ORDER.map(([key, label]) => (
+          <li key={key}>
+            <strong>{label}</strong> {guidance.advice[key]}
+            <span className="sw" lang="sw">
+              {swahili.advice[key]}
+            </span>
+          </li>
+        ))}
       </ul>
       <p className="lead" style={{ marginTop: "0.6rem", marginBottom: 0 }}>
         Local hours, WBGT in °C. Tap or hover an hour for the minutes of work allowed per hour.

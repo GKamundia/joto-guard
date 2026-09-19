@@ -54,3 +54,25 @@ advice:
     adding no more than 20 % a day; workers back after a week or more away, 50 %, 60 %,
     80 % and 100 % on days 1 to 4.
   rest: "Rest in the shade, sitting or standing."
+
+# Kiswahili headlines for the same work types, levels and advice. Kiswahili is the national
+# language and the one most outdoor workers around Juja speak at work; a warning nobody reads
+# is not a warning. Reviewed by a native speaker before submission.
+swahili:
+  work_types:
+    light: "Kazi nyepesi"
+    moderate: "Kazi ya wastani"
+    heavy: "Kazi nzito"
+    very_heavy: "Kazi nzito sana"
+  levels:
+    normal: "Kazi ya kawaida, hata kwa wafanyakazi wapya."
+    acclimatized_only: "Ni wafanyakazi waliozoea joto pekee wanaopaswa kufanya kazi bila mapumziko."
+    work_rest: "Fanya kazi kwa vipindi, ukipumzika kivulini."
+    reschedule: "Ni joto kupita kiasi kwa kazi hii: ihamishie saa yenye ubaridi."
+  advice:
+    water: "Kunywa kikombe kimoja (mililita 240) cha maji kila baada ya dakika 15 hadi 20."
+    new_workers: >-
+      Wafanyakazi wapya wasifanye kazi zaidi ya asilimia 20 ya muda wa kawaida kwenye joto
+      siku ya kwanza, wakiongeza si zaidi ya asilimia 20 kila siku; waliorudi baada ya wiki
+      au zaidi, asilimia 50, 60, 80 na 100 kwa siku ya 1 hadi 4.
+    rest: "Pumzika kivulini, ukiwa umekaa au umesimama."

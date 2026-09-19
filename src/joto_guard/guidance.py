@@ -89,6 +89,7 @@ def forecast_guidance(
             },
             "levels": bands.LEVEL_TEXT,
             "advice": guidance.advice,
+            "swahili": guidance.swahili,
             "hours": hours,
             "days": summaries,
             "sources": SOURCES,

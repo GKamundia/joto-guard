@@ -335,6 +335,12 @@ h2.part {
   cursor: pointer;
 }
 
+.worktypes button small {
+  display: block;
+  font-size: 0.72rem;
+  opacity: 0.7;
+}
+
 .worktypes button.selected {
   background: var(--accent);
   border-color: var(--accent);
@@ -439,5 +445,11 @@ ul.advice {
 }
 
 ul.advice li {
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.45rem;
+}
+
+/* Kiswahili beside the English, quieter but the same size: it is a translation, not a footnote. */
+.sw {
+  display: block;
+  color: var(--muted);
 }

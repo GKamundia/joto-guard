@@ -63,6 +63,7 @@ class HeatGuidance:
     work_minutes_per_hour: tuple[int, ...]
     examples: dict[str, tuple[str, ...]]
     advice: dict[str, str]
+    swahili: dict[str, dict[str, str]]
 
 
 def load_guidance(path: str | Path) -> HeatGuidance:
@@ -80,6 +81,7 @@ def guidance_from_dict(data: Mapping[str, Any]) -> HeatGuidance:
         work_minutes_per_hour=tuple(int(m) for m in data["work_minutes_per_hour"]),
         examples={name: tuple(items) for name, items in data.get("examples", {}).items()},
         advice=dict(data.get("advice", {})),
+        swahili={part: dict(strings) for part, strings in data.get("swahili", {}).items()},
     )
     if not guidance.work_types or min(guidance.work_types.values()) <= 0:
         raise ValueError("every work type needs a positive metabolic rate")
@@ -90,7 +92,23 @@ def guidance_from_dict(data: Mapping[str, Any]) -> HeatGuidance:
     unknown = sorted(set(guidance.examples) - set(guidance.work_types))
     if unknown:
         raise ValueError(f"examples for unknown work types: {', '.join(unknown)}")
+    _check_swahili(guidance)
     return guidance
+
+
+def _check_swahili(guidance: HeatGuidance) -> None:
+    """Every English string a reader can be shown needs its Kiswahili twin, or none do."""
+    if not guidance.swahili:
+        return
+    expected = {
+        "work_types": set(guidance.work_types),
+        "levels": set(LEVELS),
+        "advice": set(guidance.advice),
+    }
+    for part, keys in expected.items():
+        missing = sorted(keys - set(guidance.swahili.get(part, {})))
+        if missing:
+            raise ValueError(f"no Kiswahili for {part}: {', '.join(missing)}")
 
 
 def hourly_rate_w(work_w: float, work_minutes: float, rest_w: float) -> float:

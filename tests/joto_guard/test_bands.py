@@ -135,6 +135,21 @@ def test_bad_configuration_is_refused(config_path):
         bands.guidance_from_dict(raw)
 
 
+def test_every_english_string_has_a_kiswahili_twin(guidance):
+    assert set(guidance.swahili["work_types"]) == set(guidance.work_types)
+    assert set(guidance.swahili["levels"]) == set(bands.LEVELS)
+    assert set(guidance.swahili["advice"]) == set(guidance.advice)
+
+
+def test_a_missing_kiswahili_string_is_refused(config_path):
+    import yaml
+
+    raw = yaml.safe_load((config_path.parent / "heat_guidance.yaml").read_text())
+    del raw["swahili"]["levels"]["work_rest"]
+    with pytest.raises(ValueError, match="no Kiswahili for levels: work_rest"):
+        bands.guidance_from_dict(raw)
+
+
 def test_forecast_guidance_document(guidance):
     station = {"name": "Conduit@Empathy1", "latitude": -1.1, "longitude": 37.0}
     document = forecast_guidance(
