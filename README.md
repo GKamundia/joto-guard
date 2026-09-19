@@ -4,14 +4,11 @@
 
 All development for this submission took place from 17 to 21 September 2026. The commit history is the record.
 
-<!--
-The 15 sections below are required by the Hack The Weather rules. Replace each placeholder line.
-Keep "Known limitations" and "Reproducibility" as well: judges reward honesty and one-command reruns.
--->
-
 ## 1. Project name
 
-**Joto Guard** (*joto* is Kiswahili for heat): hourly heat-stress guidance for outdoor work in Juja, built on a quality-controlled Conduit@Empathy1 station. _TBD: final tagline._
+**Joto Guard** (*joto* is Kiswahili for heat).
+
+> Hour by hour, which outdoor work is safe around Juja — from the Conduit@Empathy1 station's own sensors, after we found the heat-stress index it publishes could not be used to warn anyone, and rebuilt it.
 
 ## 2. Problem statement
 
@@ -27,41 +24,120 @@ The evidence, its sources and its limits (we found no published heat study for J
 
 ## 3. Solution
 
-_TBD: what the app does and the decision it helps someone make._
+Joto Guard answers one question: **for the next three days, hour by hour, can this kind of outdoor work go on?**
+
+It answers in the index occupational heat limits are actually written in, the wet bulb globe temperature (WBGT), which combines heat, humidity, wind and sun. For each hour and each of four workloads it gives a level, the minutes of work that hour allows, and what to do:
+
+| Level | Meaning |
+|---|---|
+| Normal | Work as usual, new workers included. |
+| Acclimatized only | Workers used to the heat can work through; new workers need breaks. |
+| Work/rest | Work in spells, resting in the shade. The hour's allowed minutes are given. |
+| Reschedule | Too hot for this work; move it to a cooler hour. |
+
+A foreman starting a concrete pour, a farm supervisor planning a harvest day, or a community health team planning household visits sees the answer for the whole day at once. On 20 September 2026, for example, heavy work runs normally until 14:00, needs work-and-rest spells from 14:00 to 15:00, and is normal again after that. Every level is shown in English and Kiswahili.
+
+Three things make the answer worth trusting, and all three come from the station:
+
+1. **The station's own heat-stress index is wrong, and we show it.** Its firmware WBGT column reads **6.1 °C below** a standards-grade value between 10:00 and 15:59 — it behaves as if the sun were not shining. Nobody could have been warned with it. We rebuilt WBGT with the Liljegren et al. (2008) model from the station's own temperature, humidity, pressure, wind and light sensors.
+2. **Every number passes quality control first.** Sixteen rules flag every reading before it is used, and the Station Health Report publishes what they found, including five faults we are reporting back to JHUB.
+3. **The forecast is corrected towards the station.** A raw ECMWF forecast runs about 2 °C cool at midday here. Corrected against the station's own record it is right to 1.07 °C on days it never saw, and it carries an uncertainty band.
 
 ## 4. How Conduit@Empathy data is used
 
-_TBD: one table row per pipeline step (ingest, quality control, aggregation, application logic, outputs). Conduit data must drive the logic, not only the charts._
+Conduit data is not the illustration here; it is the input, the reference and the check. Remove it and nothing downstream exists: there is no WBGT, no correction to apply to the forecast, and no guidance.
 
-| Step | Conduit variables | What happens |
+| Step | Conduit variables used | What happens |
 |---|---|---|
-| Ingest | all 26 columns | _TBD_ |
-| Quality control (Conduit Sentinel) | all | _TBD_ |
-| Application logic | _TBD_ | _TBD_ |
+| **Ingest** | all 26 export columns | Three GeoCSV exports parsed to one table: 18,364 observations, 2,825 duplicate timestamps dropped, 28 Aug to 15 Sep 2026. Units are taken from the documented schema, not the export header, which mislabels humidity and heat index. |
+| **Quality control** | all 26 | Sixteen rules (R01–R16) flag each value 0 good, 1 suspect, 2 bad, 3 missing: plausible range, site-specific pressure range for 1,523 m, step change, flat line, three-thermometer agreement, gust below wind speed, rain gauge against rain gauge, empty channel, duplicated export column, undocumented device code. Every flag is published with the rule that fired. |
+| **Aggregation** | flagged observations | Hourly means built **only** from good and suspect values, with the count behind each hour. Hours without enough good data are left empty rather than filled. |
+| **Light calibration** | `light_ir_counts` | The SI1145 reports raw counts, which no heat model can use. Fitted to W/m² against ERA5 as `GHI = (IR − 253) × (a + b(1 − μ))`, μ being the hour's mean cosine of the solar zenith. Held-out R² 0.67 over daylight, 0.91 under a clear reference sky. |
+| **WBGT model** | `t_sht_c`, `rh_pct`, `p_station_hpa`, `wind_speed_ms`, calibrated `light_ir_counts` | The Liljegren et al. (2008) heat-balance model solves globe temperature and natural wet bulb from those five station measurements, giving WBGT for 312 of the record's 456 hours. Peak 28.5 °C on 14 Sep at 12:00. |
+| **Audit of the station's own columns** | `wet_bulb_fw_c`, `heat_index_fw_c`, `wbgt_fw_c` | Checked against the published formulas. The wet bulb is exactly Stull (2011), mean absolute difference 0.03 °C. The heat index follows the NWS formula. The WBGT matches no published formula and sits 6.1 °C below the model at midday, which is the finding the project is built on. |
+| **Forecast correction** | the station's hourly WBGT | The station record *is* the truth the forecast is corrected towards: a per-local-hour offset and an uncertainty band fitted on 15 days of archived ECMWF forecasts against station WBGT, scored by leaving each day out. |
+| **Guidance** | corrected WBGT and its band | NIOSH's limits for the four workload categories turn each hour into a level and the minutes of work it allows, for acclimatized and for new workers. The band gives the "could reach the next level" warning. |
+| **Outputs** | everything above | The API, the web page and the Telegram bot all read these same files, so they cannot disagree. Every quality-controlled table is downloadable from `/v1/dataset/…`. |
+
+The station is also the subject of the **Station Health Report**, which publishes its uptime, sensor-by-sensor status, thermometer agreement, rain-gauge cross-check, light-sensor calibration and derived-column audit, and ends with five specific repairs for JHUB.
 
 ## 5. Features
 
-_TBD_
+- **Heat guidance for the next three days**, hour by hour, for light, moderate, heavy and very heavy work, with the level, the minutes of work each hour allows, and separate answers for workers used to the heat and workers new to it.
+- **English and Kiswahili** for every level and every piece of advice.
+- **An uncertainty band** on every forecast hour, and a "could reach the next level" marker when the upper band crosses into a stricter level.
+- **A corrected forecast**: ECMWF IFS corrected towards the station by local hour, cutting mean absolute error from 1.46 to 1.07 °C, and from 2.58 to 1.62 °C at midday.
+- **A validated WBGT series** for the station, computed with the ISO-standard physics rather than taken from the firmware.
+- **The Station Health Report**: coverage calendar, daily health score, sensor-group status, three-thermometer agreement, rain-gauge cross-check, light-sensor calibration, an audit of the station's own calculated columns, and five repairs recommended to JHUB.
+- **A Telegram bot**: `/now`, `/today`, `/tomorrow`, with an optional work type.
+- **An open API** with interactive documentation and every quality-controlled table downloadable as CSV.
+- **One command to run all of it**: `docker compose up --build`.
 
 ## 6. Technology stack
 
-_TBD: Python (pandas, pytest), FastAPI, React + Vite + Leaflet, Telegram bot, and anything else used._
+| Part | Built with |
+|---|---|
+| Pipeline and models | Python 3.11+, pandas, NumPy, PyYAML |
+| Physics | Liljegren et al. (2008) WBGT, implemented in `src/joto_guard/wbgt.py` |
+| API | FastAPI, Uvicorn |
+| Web | React 19, Vite, Leaflet (charts are hand-drawn SVG, no chart library) |
+| Bot | python-telegram-bot, httpx |
+| Tests and lint | pytest (318 tests), ruff, GitHub Actions |
+| Packaging | Docker, Docker Compose; Render for the API, Vercel for the page |
+| External data | Open-Meteo (ECMWF IFS forecast, ERA5 archive) |
+
+No database: the pipelines write CSV and JSON, and the API re-reads them whenever they change, so re-running the pipeline refreshes the service without a restart.
 
 ## 7. Architecture
 
-_TBD: diagram in `docs/architecture/` plus three sentences._
+```mermaid
+flowchart LR
+  subgraph Sources
+    C["Conduit@Empathy1<br/>CHORDS instrument 61"]
+    O["Open-Meteo<br/>ECMWF IFS + ERA5"]
+  end
+  subgraph Sentinel["Conduit Sentinel"]
+    I[ingest] --> Q[qc: R01-R16] --> H[hourly] --> A[audit]
+  end
+  subgraph Joto["Joto Guard"]
+    S[solar calibration] --> W[Liljegren WBGT]
+    W --> B[forecast correction]
+    B --> G[NIOSH guidance]
+  end
+  subgraph Serving
+    API[FastAPI] --> WEB[React page]
+    API --> BOT[Telegram bot]
+  end
+  C --> I
+  H --> S
+  H --> W
+  W --> B
+  O --> B
+  A --> API
+  G --> API
+```
+
+Three stages, each writing files the next one reads. **Conduit Sentinel** turns the raw exports into quality-controlled observations, hourly means and a station health report; it knows nothing about heat stress. **Joto Guard** calibrates the light sensor, computes WBGT from the station's sensors, corrects the forecast towards that series and applies the NIOSH limits. **Serving** is a thin layer: the API re-reads those files, and the page and the bot both read the API, so none of the three can show a different number. The source of the diagram is in [`docs/architecture/pipeline.mmd`](docs/architecture/pipeline.mmd).
 
 ## 8. Installation and setup
 
-Prerequisites: Python 3.11 or newer.
+The station exports are in the repository, so nothing below needs a portal account or an API key.
+
+**With Docker**, the whole thing in one command:
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
+docker compose up --build
 ```
 
-Put the two organiser GeoCSV files in `data/raw/organiser/` (see its README). _TBD: `.env` from `.env.example` once the API and bot exist._
+That runs the pipeline, then serves the API on http://127.0.0.1:8000 and the page on http://localhost:5173.
+
+**Without Docker**, Python 3.11 or newer:
+
+```bash
+python -m venv .venv && source .venv/bin/activate && pip install -e ".[api,bot,dev]"
+```
+
+The Telegram bot is the only part that needs a secret. Copy `.env.example` to `.env` and put a token from [@BotFather](https://t.me/BotFather) in `TELEGRAM_BOT_TOKEN`. `.env` is git-ignored; no secret is in this repository. Deployment is in [`DEPLOY.md`](DEPLOY.md).
 
 ## 9. Usage
 
@@ -80,7 +156,7 @@ python -m conduit_sentinel data/raw/organiser --out data/processed
 | `audit_results.csv` | checks of the firmware wet bulb, heat index and WBGT, and thermometer agreement |
 | `report.json` | the Station Health Report payload |
 
-Serve the report and open the Station Health Report page:
+Serve those outputs and open the page:
 
 ```bash
 uvicorn api.app:app --reload
@@ -90,7 +166,7 @@ uvicorn api.app:app --reload
 cd web && npm install && npm run dev
 ```
 
-The API is then on http://127.0.0.1:8000 (documentation at `/docs`) and the page on http://localhost:5173. The page reads `GET /v1/station-health` and holds no numbers of its own; `src/api/README.md` lists the other endpoints.
+The API is then on http://127.0.0.1:8000 (documentation at `/docs`) and the page on http://localhost:5173. The page reads `/v1/heat-guidance`, `/v1/station-health` and `/v1/wbgt`, and holds no numbers of its own; `src/api/README.md` lists every endpoint.
 
 Calibrate the station's light sensor to W/m², which Joto Guard's WBGT needs. The first command fetches the ERA5 reference once; the second writes `config/solar_calibration.json` and `data/processed/ghi_hourly.csv` (method in `docs/decisions/0006-light-sensor-calibration.md`):
 
@@ -128,28 +204,75 @@ python -m joto_guard fit-correction --past-forecasts data/reference/open_meteo_e
 
 Tests and lint:
 
+Run the Telegram bot against that API (see [`bot/README.md`](bot/README.md)):
+
 ```bash
-pytest
-ruff check src tests && ruff format --check src tests
+set -a && . ./.env && set +a && python bot/joto_bot.py
 ```
 
-_TBD: Telegram bot._
+`/now`, `/today` and `/tomorrow` answer for heavy work; add a work type to any of them, for example `/today light`.
+
+Tests and lint:
+
+```bash
+pytest
+```
+
+```bash
+ruff check src tests bot && ruff format --check src tests bot
+```
 
 ## 10. Data sources
 
-_TBD: see `docs/DATA_SOURCES.md`. Must include the Conduit@Empathy1 instrument (CHORDS instrument 61, attributed to `3d-fewsnet.icdp.ucar.edu`), the CHORDS software citation (DOI 10.5065/d6v1236q identifies the software, not the station data) and every external dataset with its licence or terms._
+Full provenance, with dates obtained and terms, is in [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md).
+
+| Source | What it gives | Terms |
+|---|---|---|
+| **Conduit@Empathy1**, CHORDS instrument 61 on the UCAR 3D-PAWS FEWS NET portal (`3d-fewsnet.icdp.ucar.edu`), lat −1.099736, lon 37.014528, 1,523 m | Every station measurement the project uses. Three GeoCSV exports from the organisers' Resources page, 28 Aug to 15 Sep 2026 | Attributed to `3d-fewsnet.icdp.ucar.edu`, as the export header asks |
+| CHORDS platform software | The portal the station publishes through. Daniels, M. et al. (2014), *CHORDS software* v0.9, UCAR, doi:10.5065/D6V1236Q | The DOI in every export identifies the **software**, not this station's data. No dataset DOI exists for the station |
+| **Open-Meteo** — ECMWF IFS forecast, historical forecast archive, ERA5 archive | The three-day forecast, the archived forecasts the correction is fitted on, and the irradiance reference for the light calibration | CC BY 4.0, no key required |
+| NIOSH (2016), *Criteria for a Recommended Standard: Occupational Exposure to Heat and Hot Environments*, 2016-106 | The heat limits and the work/rest rule | US government work, public domain |
+| Herrmann, S. D. et al. (2024), *2024 Adult Compendium of Physical Activities* | The metabolic rates that place real tasks in the four workload categories | Cited per the compendium's terms |
+| Liljegren, J. C. et al. (2008), WBGT model v1.1, Argonne National Laboratory | The physics `src/joto_guard/wbgt.py` adapts | See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) |
+
+The evidence for the problem statement is cited source by source, with its limits stated, in [`docs/PROBLEM_EVIDENCE.md`](docs/PROBLEM_EVIDENCE.md).
+
+NASA POWER was in the plan as the irradiance reference but returned only fill values for this period when checked on 18 Sep 2026, so ERA5 was used instead ([decision 0006](docs/decisions/0006-light-sensor-calibration.md)).
 
 ## 11. AI usage
 
-_TBD: summarise `docs/AI_USAGE.md`: which AI tools were used, for what, and confirmation that every team member can explain the code._
+The AI tool used was Anthropic's Claude (Claude Code, and Claude in Cowork during planning), for writing code, tests and documentation, for debugging, and for research and data analysis. Every change was reviewed and run by the team, and each member can explain the code. The full log — what was used on which day, for what, and which files it touched — is in [`docs/AI_USAGE.md`](docs/AI_USAGE.md).
 
 ## 12. Screenshots / demo
 
-_TBD: images in `docs/figures/`; link to the demo video._
+Demo video: _TBD — add the unlisted link before submitting._
+
+**The guidance, English and Kiswahili.** Three days of heavy work at the station, the hours that need care, and what to do.
+
+![Heat guidance for outdoor work](docs/figures/01-heat-guidance.png)
+
+**The finding.** How far the station's own WBGT column sits below the standard model at each hour of the day: 6.1 °C at midday, as if the sun were not shining.
+
+![The station's own WBGT column against the model](docs/figures/02-firmware-wbgt.png)
+
+**The Station Health Report.** What the station is, how much of the record it actually delivered, and its daily health score.
+
+![Station Health Report](docs/figures/03-station-health.png)
+
+**What we are sending back to JHUB.** Five faults found in the station's data, each with the rule that found it and how sure we are.
+
+![Recommendations to JHUB](docs/figures/04-recommendations.png)
+
+The figures are screenshots of the running page. To regenerate them, start the stack, then take the shots at 1,280 px wide.
 
 ## 13. Team members
 
-_TBD: names and roles._
+| Name | Role |
+|---|---|
+| George Kamundia | Data, quality control, physics and models: Conduit Sentinel, the light calibration, the WBGT model, the forecast correction and the heat guidance |
+| _TBD — teammate's name_ | _TBD — role_ |
+
+Both members are registered on Devpost and appear in the demo video.
 
 ## 14. Future development
 
@@ -168,8 +291,42 @@ MIT. See `LICENSE`.
 
 ## Known limitations
 
-_TBD: for example, 8-day data sample, suspected (not confirmed) sensor faults, light-sensor calibration, validation scope._
+We would rather state these than have a judge find them.
+
+- **The record is 19 days of cool season, not a year.** The exports cover 28 Aug to 15 Sep 2026 with a six-day hole (5–10 Sep), and air temperature never passed 28.5 °C. January to March, Kenya's hot season, is not in the data at all. Every number here describes a cool-season fortnight.
+- **The nowcast is missing, because the data is not live.** A new CHORDS portal account starts as a guest; downloading needs permissions a portal administrator grants, and ours had not been granted by 19 Sep 2026. The service therefore runs on the organisers' exports and forecasts forward, rather than reporting the current hour.
+- **WBGT is available for 312 of the record's 456 hours.** The rest lack a quality-controlled input, mostly inside the six-day gap. We leave those hours empty rather than filling them.
+- **The light calibration is the weakest link in the chain.** Held out day by day it reaches R² 0.67 across daylight but only 0.30 with the sun above 30°, RMSE 155 W/m². Much of that is the station seeing its own cloud while ERA5 averages a 25 km cell — under a clear reference sky the error halves and R² is 0.91. Still, ±155 W/m² moves WBGT by about ±1.2 °C at midday, and NIOSH's limits are only 1.5 to 3 °C apart, so a level near a boundary can be wrong. [Decision 0007](docs/decisions/0007-liljegren-wbgt.md) gives the full sensitivity table.
+- **WBGT is modelled, not measured.** The station has no black-globe thermometer, so globe temperature is solved rather than observed. That is why we recommend one to JHUB.
+- **The forecast correction is fitted on 15 days.** It beats the station's own climatology at every lead day (1.07 °C against 1.38 °C), but its uncertainty band covered the station on 78.9 % of hours, not the 80 % it targets. It should be refitted as the record grows: `python -m joto_guard fit-correction`.
+- **The sensor faults are reported at the confidence we have.** Rain Gauge 2 is a *suspected* fault from a single rainy day, not a confirmed one. The empty battery channel may be an export setting rather than a dead sensor. The health report labels each one.
+- **No study has measured heat stress in Juja itself.** The evidence for who works outdoors there is the county's own development plan and local quarrying studies; the worker-heat evidence comes from Mombasa, Tana River and Siaya. [`docs/PROBLEM_EVIDENCE.md`](docs/PROBLEM_EVIDENCE.md) section 7 lists every gap.
+- **We have not yet run it on another station.** The pipeline needs only the same variables, but each station needs its own light calibration and forecast correction, and we have no downloads for the sister stations.
+- **The Kiswahili has not been checked by a professional translator.**
+- **This is planning guidance, not medical advice.** It does not replace an employer's duty to watch workers for heat illness.
 
 ## Reproducibility
 
-_TBD: one command that regenerates every figure and number in this README._
+Every number and figure in this README comes from the commands below; nothing is typed in by hand.
+
+One command, on a clean machine with Docker, running the whole pipeline and serving the result:
+
+```bash
+docker compose up --build
+```
+
+Or in a virtual environment, the same three steps the `pipeline` service runs:
+
+```bash
+python -m conduit_sentinel data/raw/organiser --out data/processed && python -m joto_guard wbgt && python -m joto_guard forecast
+```
+
+The first two are deterministic: given the three exports in `data/raw/organiser/`, they write byte-identical outputs every time. The third fetches the current forecast, so its numbers move with the weather; `python -m joto_guard forecast --payload <saved response>` reproduces an earlier run exactly, and every fetched response is saved in `data/reference/`.
+
+The fitted constants are tracked, not regenerated on each run, so a rerun cannot silently change them: [`config/solar_calibration.json`](config/solar_calibration.json) and [`config/forecast_correction.json`](config/forecast_correction.json), each with its held-out scores. Refit them with `python -m joto_guard calibrate-light` and `python -m joto_guard fit-correction` when more data arrives.
+
+```bash
+pytest && ruff check src tests bot && ruff format --check src tests bot
+```
+
+318 tests, run on Python 3.11 and 3.13 in GitHub Actions on every push. They use fixtures cut from the real exports and never touch the network.
