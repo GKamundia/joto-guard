@@ -1,0 +1,56 @@
+# Heat limits and work/rest advice by type of work (decision 0011).
+# Source unless noted: NIOSH (2016). Criteria for a Recommended Standard: Occupational Exposure
+# to Heat and Hot Environments. DHHS (NIOSH) Publication No. 2016-106. Printed page numbers.
+
+# Section 8.1, page 93. limit (degC WBGT) = intercept - slope * log10(metabolic rate in W),
+# where WBGT and metabolic rate are both 1-hour averages (section 1.1.3, page 4).
+limits:
+  acclimatized:           # Recommended Exposure Limit (REL)
+    intercept_c: 56.7
+    slope_c: 11.5
+  new_workers:            # Recommended Alert Limit (RAL): workers not acclimatized to heat
+    intercept_c: 59.9
+    slope_c: 14.1
+
+# Table 5-1, page 70, NIOSH column: the top of each workload category, in W, so the limits
+# protect everyone in the category.
+work_types:
+  light: 233
+  moderate: 349
+  heavy: 465
+  very_heavy: 580
+
+# Table 5-1, page 70: resting metabolic rate, for the rest part of a work/rest hour.
+rest_metabolic_rate_w: 117
+
+# Minutes of work in each hour, as in NIOSH Figures 8-1 and 8-2 (page 94).
+work_minutes_per_hour: [60, 45, 30, 15]
+
+# Examples from the 2024 Adult Compendium of Physical Activities (Herrmann et al. 2024),
+# code and MET value. For a 70 kg worker, W = MET x 81.4.
+examples:
+  light:
+    - "masonry or concrete work, light effort (11482, 2.5 MET)"
+    - "farm work, light effort (11147, 2.0 MET)"
+  moderate:
+    - "picking fruit (11510, 3.5 MET)"
+    - "rice planting (11195, 3.8 MET)"
+    - "walking on the job carrying light loads (11795, 3.5 MET)"
+  heavy:
+    - "masonry or concrete work, moderate effort (11480, 4.3 MET)"
+    - "farm work such as harvesting crops (11146, 4.8 MET)"
+    - "shovelling, moderate effort (11560, 5.0 MET)"
+    - "carrying 23 to 34 kg (11830, 5.5 MET)"
+  very_heavy:
+    - "shovelling, vigorous effort (11570, 6.5 MET)"
+    - "carrying 34 to 45 kg (11840, 7.0 MET)"
+
+# Water: executive summary, page vii. New workers: Table 4-1, page 34. Rest: Table 8-1 note,
+# page 104.
+advice:
+  water: "Drink about a cup (240 mL) of water every 15 to 20 minutes."
+  new_workers: >-
+    New workers should spend no more than 20 % of the usual time in the heat on day 1,
+    adding no more than 20 % a day; workers back after a week or more away, 50 %, 60 %,
+    80 % and 100 % on days 1 to 4.
+  rest: "Rest in the shade, sitting or standing."

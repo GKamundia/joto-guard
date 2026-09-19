@@ -19,7 +19,7 @@ from conduit_sentinel.audit import is_night
 from conduit_sentinel.config import load_config
 from conduit_sentinel.pipeline import csv_ready
 
-from . import bias
+from . import bands, bias
 from .forecast import (
     DEFAULT_MODEL,
     FORECAST_URL,
@@ -28,6 +28,7 @@ from .forecast import (
     request_params,
     variable_name,
 )
+from .guidance import forecast_guidance
 from .solar_calibration import calibrate, ghi_hourly, load, reference_from_open_meteo, save
 from .station_wbgt import firmware_by_local_hour, mean_difference, wbgt_hourly
 from .wbgt import REFERENCE_HEIGHT_M
@@ -122,6 +123,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         type=Path,
         default=Path("config/forecast_correction.json"),
         help="correction towards the station, from fit-correction (skipped if the file is absent)",
+    )
+    forecast.add_argument(
+        "--guidance",
+        type=Path,
+        default=Path("config/heat_guidance.yaml"),
+        help="heat limits and advice by type of work (default: config/heat_guidance.yaml)",
     )
     forecast.set_defaults(handler=station_forecast)
 
@@ -274,6 +281,20 @@ def station_forecast(args: argparse.Namespace) -> int:
     csv_ready(table).to_csv(out, index=False)
 
     timezone = load_config(args.config).station.display_timezone
+    document = forecast_guidance(
+        table,
+        bands.load_guidance(args.guidance),
+        {
+            key: station[key]
+            for key in ("name", "latitude", "longitude", "elevation_m")
+            if key in station
+        },
+        timezone,
+        args.model,
+        datetime.now(UTC),
+    )
+    guidance_path = args.processed / "heat_guidance.json"
+    guidance_path.write_text(json.dumps(document, indent=1) + "\n", encoding="utf-8")
     local = table["hour_utc"].dt.tz_convert(timezone)
     column = "wbgt_c" if correction is None else "wbgt_corrected_c"
     print(f"Forecast from {source}: {len(table)} hours")
@@ -294,7 +315,14 @@ def station_forecast(args: argparse.Namespace) -> int:
         print(f"Raw model output: no correction at {args.correction}")
     else:
         print(f"Corrected towards the station with {args.correction}")
-    print(f"Wrote {out}")
+    for day in document["days"]:
+        heavy = day["by_work_type"].get("heavy")
+        if heavy and heavy["limited_from"]:
+            print(
+                f"  {day['date']}: heavy work needs work/rest from {heavy['limited_from']} "
+                f"to {heavy['limited_until']}"
+            )
+    print(f"Wrote {out} and {guidance_path}")
     return 0
 
 

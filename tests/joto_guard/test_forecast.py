@@ -170,6 +170,10 @@ def test_command_line_computes_a_saved_forecast(tmp_path, fixtures_dir, config_p
     assert len(table) == 48
     assert table["hour_utc"].iloc[0] == "2026-09-19T00:00:00Z"
     assert "wbgt_corrected_c" not in table
+    guidance = json.loads((processed / "heat_guidance.json").read_text())
+    assert len(guidance["hours"]) == 48
+    assert set(guidance["work_types"]) == {"light", "moderate", "heavy", "very_heavy"}
+    assert guidance["forecast"]["corrected_towards_station"] is False
     out = capsys.readouterr().out
     assert "2026-09-20: highest WBGT" in out
     assert "Raw model output" in out
