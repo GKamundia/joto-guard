@@ -63,14 +63,35 @@ The station is also the subject of the **Station Health Report**, which publishe
 
 ## 5. Features
 
-- **Heat guidance for the next three days**, hour by hour, for light, moderate, heavy and very heavy work, with the level, the minutes of work each hour allows, and separate answers for workers used to the heat and workers new to it.
+The dashboard has five tabs, each linkable (`#guidance`, `#forecast`, `#station`, `#health`, `#method`).
+
+**Guidance** — the product.
+
+- **Right now**: the current hour's level, its WBGT with the band, and the minutes of work the hour allows for workers used to the heat and for new workers, with the next spell needing care.
+- **Heat guidance for the next three days**, hour by hour, for light, moderate, heavy and very heavy work. Choose a day to see all of it, choose an hour for its detail.
 - **English and Kiswahili** for every level and every piece of advice.
 - **An uncertainty band** on every forecast hour, and a "could reach the next level" marker when the upper band crosses into a stricter level.
-- **A corrected forecast**: ECMWF IFS corrected towards the station by local hour, cutting mean absolute error from 1.46 to 1.07 °C, and from 2.58 to 1.62 °C at midday.
-- **A validated WBGT series** for the station, computed with the ISO-standard physics rather than taken from the firmware.
-- **The Station Health Report**: coverage calendar, daily health score, sensor-group status, three-thermometer agreement, rain-gauge cross-check, light-sensor calibration, an audit of the station's own calculated columns, and five repairs recommended to JHUB.
+
+**Forecast** — the three days in full.
+
+- The corrected WBGT as a chart with its band, the raw forecast beside it, and the NIOSH limits for the chosen work type drawn across it. Point anywhere to read the hour.
+- **How much the correction helps**: mean absolute error for the raw forecast, the corrected forecast and a climatological baseline, for all hours, for midday, and at each lead day. Corrected beats both everywhere: 1.07 °C against 1.46 raw and 1.38 baseline.
+- **The weather behind the index**: the forecast air temperature, humidity, wind, solar, globe temperature and natural wet bulb the model solves WBGT from.
+
+**Station record** — what the instrument actually measured.
+
+- Every hour of the record as a chart, switchable between WBGT, air temperature, humidity, wind, solar, globe temperature and natural wet bulb. The WBGT view draws the station's own column beneath ours, so the 6.1 °C midday gap is visible directly. Gaps in the record break the line rather than being joined across.
+- The light-sensor calibration with its held-out scores, stated plainly as the weakest link.
+- The firmware WBGT gap by hour of day, the rain gauges, and the device codes.
+
+**Station health** — coverage calendar, daily health score, sensor-group status, three-thermometer agreement, an audit of the station's own calculated columns, five repairs recommended to JHUB, and every table as a download.
+
+**Method** — how a reading becomes advice, step by step, what the service cannot tell you, and the sources.
+
+Throughout:
 - **A Telegram bot**: `/now`, `/today`, `/tomorrow`, with an optional work type.
 - **An open API** with interactive documentation and every quality-controlled table downloadable as CSV.
+- **Light and dark**, and a layout that works on a phone, which is what a supervisor checks at dawn.
 - **One command to run all of it**: `docker compose up --build`.
 
 ## 6. Technology stack
@@ -80,9 +101,9 @@ The station is also the subject of the **Station Health Report**, which publishe
 | Pipeline and models | Python 3.11+, pandas, NumPy, PyYAML |
 | Physics | Liljegren et al. (2008) WBGT, implemented in `src/joto_guard/wbgt.py` |
 | API | FastAPI, Uvicorn |
-| Web | React 19, Vite, Leaflet (charts are hand-drawn SVG, no chart library) |
+| Web | React 19, Vite, Leaflet. Charts are hand-drawn SVG with pointer tracking, so there is no chart library to pull in |
 | Bot | python-telegram-bot, httpx |
-| Tests and lint | pytest (318 tests), ruff, GitHub Actions |
+| Tests and lint | pytest (321 tests), ruff, GitHub Actions |
 | Packaging | Docker, Docker Compose; Render for the API, Vercel for the page |
 | External data | Open-Meteo (ECMWF IFS forecast, ERA5 archive) |
 
@@ -247,23 +268,27 @@ The AI tool used was Anthropic's Claude (Claude Code, and Claude in Cowork durin
 
 Demo video: _TBD — add the unlisted link before submitting._
 
-**The guidance, English and Kiswahili.** Three days of heavy work at the station, the hours that need care, and what to do.
+**Guidance.** The hour you are in, then the next three days for the chosen kind of work, in English and Kiswahili. Choose a day to see all of it, or an hour for its detail.
 
-![Heat guidance for outdoor work](docs/figures/01-heat-guidance.png)
+![The guidance tab](docs/figures/01-guidance.png)
 
-**The finding.** How far the station's own WBGT column sits below the standard model at each hour of the day: 6.1 °C at midday, as if the sun were not shining.
+**Forecast.** The corrected WBGT with its uncertainty band, the raw forecast beside it and the NIOSH limits drawn across it; how much the correction helps, scored on days left out of its fit; and the weather the index is solved from.
 
-![The station's own WBGT column against the model](docs/figures/02-firmware-wbgt.png)
+![The forecast tab](docs/figures/02-forecast.png)
 
-**The Station Health Report.** What the station is, how much of the record it actually delivered, and its daily health score.
+**Station record.** Every hour the instrument delivered. The WBGT view draws the station's own column beneath ours, so the midday gap is visible directly, and the six-day hole in the exports breaks the line rather than being joined across.
 
-![Station Health Report](docs/figures/03-station-health.png)
+![The station record tab](docs/figures/03-station-record.png)
 
-**What we are sending back to JHUB.** Five faults found in the station's data, each with the rule that found it and how sure we are.
+**Station health.** What the station is, how much of the record it delivered, and its daily score — with the five repairs we are sending back to JHUB further down the tab.
 
-![Recommendations to JHUB](docs/figures/04-recommendations.png)
+![The station health tab](docs/figures/04-station-health.png)
 
-The figures are screenshots of the running page. To regenerate them, start the stack, then take the shots at 1,280 px wide.
+**Method.** How a reading becomes advice, and what the service cannot tell you.
+
+![The method tab](docs/figures/05-method.png)
+
+The figures are screenshots of the running page, taken at 1,280 px wide. To regenerate them, start the stack and shoot each tab's URL fragment.
 
 ## 13. Team members
 
@@ -329,4 +354,4 @@ The fitted constants are tracked, not regenerated on each run, so a rerun cannot
 pytest && ruff check src tests bot && ruff format --check src tests bot
 ```
 
-318 tests, run on Python 3.11 and 3.13 in GitHub Actions on every push. They use fixtures cut from the real exports and never touch the network.
+321 tests, run on Python 3.11 and 3.13 in GitHub Actions on every push. They use fixtures cut from the real exports and never touch the network.

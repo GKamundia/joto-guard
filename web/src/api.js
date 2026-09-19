@@ -20,7 +20,9 @@ export const fetchStationHealth = () => get("/v1/station-health");
 
 export const fetchHeatGuidance = () => get("/v1/heat-guidance");
 
-export const fetchWbgt = (days = 7) => get(`/v1/wbgt?days=${days}`);
+export const fetchWbgt = (days = 30) => get(`/v1/wbgt?days=${days}`);
+
+export const fetchForecast = () => get("/v1/forecast");
 
 export const datasetUrl = (name) => `${BASE}/v1/dataset/${name}`;
 
