@@ -102,6 +102,18 @@ python -m joto_guard wbgt
 
 It writes `data/processed/wbgt_hourly.csv`, which holds the inputs, globe temperature, natural and psychrometric wet bulb, WBGT and the firmware's own values for every hour. It also writes `data/processed/wbgt_firmware_by_hour.csv`, which compares the firmware's WBGT column with the model by hour of day.
 
+Forecast WBGT for the next three days from ECMWF's IFS model, computed the same way (decision 0009). It fetches from Open-Meteo, saves the response in `data/reference/` and writes `data/processed/wbgt_forecast.csv`; `--payload <file>` recomputes a saved response:
+
+```bash
+python -m joto_guard forecast
+```
+
+The raw forecast reads about 2 °C below the station at midday, so it is not yet shown as guidance. The past forecasts the correction learns from are downloaded with:
+
+```bash
+python scripts/fetch_past_forecasts.py --start 2026-08-28 --end 2026-09-15
+```
+
 Tests and lint:
 
 ```bash
