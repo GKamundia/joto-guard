@@ -32,6 +32,22 @@ def processed(tmp_path):
     pd.DataFrame({"local_hour": range(24), "n_hours": 10, "fw_minus_model_c": -3.0}).to_csv(
         directory / "wbgt_firmware_by_hour.csv", index=False
     )
+    pd.DataFrame(
+        {
+            "hour_utc": HOURS[:6].strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "t_air_c": 24.0,
+            "rh_pct": 50.0,
+            "wind_2m_ms": 1.2,
+            "ghi_wm2": 700.0,
+            "cos_zenith": 0.9,
+            "tg_c": 35.0,
+            "tnwb_c": 18.0,
+            "wbgt_c": 23.0,
+            "wbgt_corrected_c": 25.0,
+            "wbgt_low_c": 23.5,
+            "wbgt_high_c": 26.5,
+        }
+    ).to_csv(directory / "wbgt_forecast.csv", index=False)
     guidance = {"forecast": {"model": "ecmwf_ifs"}, "hours": [{"wbgt_c": 25.1}], "days": []}
     (directory / "heat_guidance.json").write_text(json.dumps(guidance))
     return directory
@@ -42,6 +58,7 @@ def configs(tmp_path, config_path):
     directory = tmp_path / "config"
     directory.mkdir()
     shutil.copy(config_path.parent / "solar_calibration.json", directory)
+    shutil.copy(config_path.parent / "forecast_correction.json", directory)
     return directory
 
 
@@ -61,6 +78,26 @@ def test_heat_guidance_follows_the_file(processed, configs):
 
     (processed / "heat_guidance.json").write_text(json.dumps({"hours": [{"wbgt_c": 30.0}]}))
     assert client.get("/v1/heat-guidance").json()["hours"][0]["wbgt_c"] == 30.0
+
+
+def test_forecast_serves_both_series_the_band_and_the_weather_behind_them(processed, configs):
+    body = client_for(processed, configs).get("/v1/forecast").json()
+
+    assert body["model"] == "ecmwf_ifs"
+    hour = body["hours"][0]
+    assert (hour["wbgt_c"], hour["wbgt_corrected_c"]) == (23.0, 25.0)
+    assert (hour["wbgt_low_c"], hour["wbgt_high_c"]) == (23.5, 26.5)
+    assert hour["t_air_c"] == 24.0 and hour["ghi_wm2"] == 700.0
+    assert "cos_zenith" not in hour  # an intermediate the page has no use for
+
+
+def test_forecast_reports_how_well_the_correction_did_on_held_out_days(processed, configs):
+    body = client_for(processed, configs).get("/v1/forecast").json()
+
+    held_out = body["correction"]["held_out"]["all"]
+    assert held_out["corrected"]["mae_c"] < held_out["raw"]["mae_c"]
+    assert len(body["correction"]["offsets_c"]) == 24
+    assert body["correction"]["fitted_on"]["n_days"] > 0
 
 
 def test_wbgt_returns_recent_hours_the_firmware_gap_and_the_calibration(processed, configs):
@@ -105,3 +142,4 @@ def test_index_lists_the_new_endpoints(processed, configs):
     endpoints = client_for(processed, configs).get("/").json()["endpoints"]
     assert "/v1/heat-guidance" in endpoints
     assert "/v1/wbgt?days=7" in endpoints
+    assert "/v1/forecast" in endpoints

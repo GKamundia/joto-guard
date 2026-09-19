@@ -41,6 +41,21 @@ WBGT_COLUMNS = [
     "wbgt_c",
     "wbgt_fw_c",
 ]
+
+# The forecast table, minus the intermediate solar terms the page has no use for.
+FORECAST_COLUMNS = [
+    "hour_utc",
+    "t_air_c",
+    "rh_pct",
+    "wind_2m_ms",
+    "ghi_wm2",
+    "tg_c",
+    "tnwb_c",
+    "wbgt_c",
+    "wbgt_corrected_c",
+    "wbgt_low_c",
+    "wbgt_high_c",
+]
 DEFAULT_ORIGINS = ("http://localhost:5173", "http://127.0.0.1:5173")
 
 UNITS = {column.name: column.unit for column in VARIABLE_COLUMNS}
@@ -64,6 +79,12 @@ def create_app(
     configs = Path(config_dir or os.environ.get("JOTO_CONFIG_DIR", DEFAULT_CONFIG_DIR))
     guidance_file = CachedFile(store.directory / "heat_guidance.json", read_json, JOTO_ADVICE)
     wbgt_file = CachedFile(store.directory / "wbgt_hourly.csv", pd.read_csv, JOTO_ADVICE)
+    forecast_file = CachedFile(store.directory / "wbgt_forecast.csv", pd.read_csv, JOTO_ADVICE)
+    correction_file = CachedFile(
+        configs / "forecast_correction.json",
+        read_json,
+        "Run 'python -m joto_guard fit-correction'.",
+    )
     firmware_file = CachedFile(
         store.directory / "wbgt_firmware_by_hour.csv", pd.read_csv, JOTO_ADVICE
     )
@@ -108,6 +129,7 @@ def create_app(
                 "/v1/qc?days=7",
                 "/v1/history?var=t_sht_c",
                 "/v1/wbgt?days=7",
+                "/v1/forecast",
                 "/v1/heat-guidance",
                 "/v1/dataset/{name}",
             ],
@@ -229,6 +251,34 @@ def create_app(
                     "dark_floor_counts": calibration["dark_floor_counts"],
                     "reference": calibration["reference"],
                     "held_out": calibration["held_out"],
+                },
+            }
+        )
+
+    @app.get(
+        "/v1/forecast",
+        summary="The WBGT forecast, raw and corrected, with the weather behind it",
+        description="What python -m joto_guard forecast last wrote: the forecast weather, the "
+        "WBGT computed from it, the correction towards the station and its band (decisions "
+        "0009 and 0010), plus how well the correction did on days left out of its fit.",
+    )
+    def forecast() -> dict[str, Any]:
+        correction = cached(correction_file)
+        return to_json_ready(
+            {
+                "model": correction["model"],
+                "method": correction["method"],
+                "timezone": correction["timezone"],
+                "hours": records(cached(forecast_file), FORECAST_COLUMNS),
+                "correction": {
+                    "offsets_c": correction["offsets_c"],
+                    "fitted_on": {
+                        "first_day": correction["first_day"],
+                        "last_day": correction["last_day"],
+                        "n_days": correction["n_days"],
+                        "n_pairs": correction["n_pairs"],
+                    },
+                    "held_out": correction["held_out"],
                 },
             }
         )
