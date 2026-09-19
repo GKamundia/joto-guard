@@ -59,6 +59,7 @@ def create_app(
     origins: Sequence[str] | None = None,
     config_dir: str | Path | None = None,
 ) -> FastAPI:
+    allowed = origins if origins is not None else _origins_from_environment()
     store = OutputStore(data_dir or os.environ.get("SENTINEL_DATA_DIR", DEFAULT_DATA_DIR))
     configs = Path(config_dir or os.environ.get("JOTO_CONFIG_DIR", DEFAULT_CONFIG_DIR))
     guidance_file = CachedFile(store.directory / "heat_guidance.json", read_json, JOTO_ADVICE)
@@ -77,7 +78,7 @@ def create_app(
     )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=list(origins if origins is not None else DEFAULT_ORIGINS),
+        allow_origins=list(allowed),
         allow_methods=["GET"],
         allow_headers=["*"],
     )
@@ -257,6 +258,18 @@ def create_app(
         return FileResponse(path, filename=name)
 
     return app
+
+
+def _origins_from_environment() -> Sequence[str]:
+    """The deployed web app's origin, which is not known until it is deployed.
+
+    JOTO_ALLOWED_ORIGINS is a comma-separated list; without it only the local Vite server
+    may call the API.
+    """
+    setting = os.environ.get("JOTO_ALLOWED_ORIGINS", "").strip()
+    if not setting:
+        return DEFAULT_ORIGINS
+    return tuple(origin.strip() for origin in setting.split(",") if origin.strip())
 
 
 def _as_utc(moment: datetime) -> pd.Timestamp:

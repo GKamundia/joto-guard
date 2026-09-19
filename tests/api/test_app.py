@@ -1,7 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
+from starlette.middleware.cors import CORSMiddleware
 
-from api.app import create_app
+from api.app import DEFAULT_ORIGINS, create_app
 from conduit_sentinel.pipeline import run, write_outputs
 
 
@@ -121,3 +122,28 @@ def test_rerunning_the_pipeline_refreshes_the_api(processed, fixtures_dir, confi
     write_outputs(run([fixtures_dir / "conduit_part_a.csv"], config), processed)
 
     assert client.get("/v1/stations").json()[0]["n_obs"] == 6
+
+
+def test_the_deployed_web_origin_can_be_set_from_the_environment(monkeypatch, tmp_path):
+    monkeypatch.setenv(
+        "JOTO_ALLOWED_ORIGINS", "https://joto-guard.vercel.app, http://localhost:5173"
+    )
+    app = create_app(data_dir=tmp_path)
+
+    allowed = next(
+        middleware.kwargs["allow_origins"]
+        for middleware in app.user_middleware
+        if middleware.cls is CORSMiddleware
+    )
+    assert allowed == ["https://joto-guard.vercel.app", "http://localhost:5173"]
+
+
+def test_without_that_setting_only_the_local_vite_server_may_call(tmp_path):
+    app = create_app(data_dir=tmp_path)
+
+    allowed = next(
+        middleware.kwargs["allow_origins"]
+        for middleware in app.user_middleware
+        if middleware.cls is CORSMiddleware
+    )
+    assert allowed == list(DEFAULT_ORIGINS)

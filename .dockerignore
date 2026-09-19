@@ -1,0 +1,16 @@
+.git/
+.github/
+.venv/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.egg-info/
+data/interim/
+data/processed/
+data/raw/portal/
+docs/
+notebooks/
+planning/
+tests/
+web/node_modules/
+web/dist/

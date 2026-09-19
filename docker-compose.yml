@@ -1,0 +1,53 @@
+# One command for the whole thing on a clean machine:
+#
+#   docker compose up --build
+#
+# `pipeline` runs Sentinel and Joto Guard once over the bundled organiser exports, then exits.
+# `api` and `web` wait for it, so the API never starts without data behind it. The bot only
+# runs when TELEGRAM_BOT_TOKEN is set: docker compose --profile bot up.
+services:
+  pipeline:
+    build: .
+    volumes:
+      - processed:/app/data/processed
+      - ./data/reference:/app/data/reference
+    command: >-
+      sh -c "python -m conduit_sentinel data/raw/organiser --out data/processed
+      && python -m joto_guard wbgt
+      && python -m joto_guard forecast"
+
+  api:
+    build: .
+    depends_on:
+      pipeline:
+        condition: service_completed_successfully
+    environment:
+      JOTO_ALLOWED_ORIGINS: ${JOTO_ALLOWED_ORIGINS:-http://localhost:5173}
+    volumes:
+      - processed:/app/data/processed
+    ports:
+      - "8000:8000"
+
+  web:
+    build:
+      context: ./web
+      args:
+        VITE_API_BASE: ${VITE_API_BASE:-http://127.0.0.1:8000}
+    depends_on: [api]
+    ports:
+      - "5173:80"
+
+  # Not a required variable: compose interpolates the whole file, so demanding the token
+  # here would stop `docker compose up` for anyone not running the bot. joto_bot.py says
+  # what is missing more clearly than compose would.
+  bot:
+    build: .
+    profiles: [bot]
+    depends_on: [api]
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      JOTO_API_BASE: http://api:8000
+    command: ["python", "bot/joto_bot.py"]
+
+volumes:
+  processed:
