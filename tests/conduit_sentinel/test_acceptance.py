@@ -187,8 +187,10 @@ def test_wbgt_below_wet_bulb_audit(sentinel):
     assert a03.loc["rows_below_wet_bulb", "value"] == 5833
     assert a03.loc["rows_below_wet_bulb", "n_rows"] == 11302
     assert a03.loc["pct_below_wet_bulb", "value"] == 51.6
-    assert a03.loc["pct_below_wet_bulb_night", "value"] == 71.3
-    assert a03.loc["pct_below_wet_bulb_day", "value"] == 34.9
+    assert a03.loc["rows_far_below_wet_bulb", "value"] == 3850
+    assert a03.loc["pct_far_below_wet_bulb", "value"] == 34.1
+    assert a03.loc["pct_far_below_wet_bulb_night", "value"] == 51.3
+    assert a03.loc["pct_far_below_wet_bulb_day", "value"] == 19.5
     assert set(a03["verdict"]) == {"non-standard"}
 
 

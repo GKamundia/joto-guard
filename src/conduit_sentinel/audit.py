@@ -67,36 +67,46 @@ def audit_heat_index(obs_qc: pd.DataFrame) -> list[dict]:
 
 
 def audit_wbgt_below_wet_bulb(obs_qc: pd.DataFrame, config: Config) -> list[dict]:
-    """A03: share of rows where firmware WBGT is below the firmware wet bulb, day and night.
+    """A03: how often firmware WBGT is below the firmware wet bulb, and far below it.
 
-    Standard WBGT (0.7 natural wet bulb + 0.2 globe + 0.1 air temperature) stays at or
-    above the wet bulb outside unusual radiative conditions, so a share above the
-    tolerance points to a non-standard formula.
+    A standard WBGT (0.7 natural wet bulb + 0.2 globe + 0.1 air temperature) can dip a
+    little below the wet bulb on calm, clear nights, when the globe and the wick radiate
+    to a sky colder than the air: by up to about 1.4 °C at this station (decision 0008).
+    So only rows more than `qc.wbgt_below_wet_bulb_margin_c` below count towards the
+    verdict, split day and night; the share below at all is kept for context.
     """
     settings = config.audit
     start, end = settings.night_start_hour, settings.night_end_hour
-    note = f"night is {start:02d}:00 to {end:02d}:59 {config.station.display_timezone}"
+    margin = config.qc.wbgt_below_wet_bulb_margin_c
+    note = (
+        f"far below is more than {margin:g} °C below; "
+        f"night is {start:02d}:00 to {end:02d}:59 {config.station.display_timezone}"
+    )
     rows = _usable_rows(obs_qc, ("wbgt_fw_c", "wet_bulb_fw_c"))
     if rows.empty:
-        return _results("A03", "wbgt_fw_c", [("pct_below_wet_bulb", None, 0)], NO_DATA, note)
+        return _results("A03", "wbgt_fw_c", [("pct_far_below_wet_bulb", None, 0)], NO_DATA, note)
 
-    below = rows["wbgt_fw_c"] < rows["wet_bulb_fw_c"] - EPS
+    difference = rows["wbgt_fw_c"] - rows["wet_bulb_fw_c"]
+    below = difference < -EPS
+    far = difference < -margin - EPS
     times = obs_qc.loc[rows.index, "time_utc"]
     night = is_night(times.dt.tz_convert(config.station.display_timezone).dt.hour, start, end)
     metrics = [
         ("rows_below_wet_bulb", int(below.sum()), len(below)),
         ("pct_below_wet_bulb", _pct(below), len(below)),
-        ("pct_below_wet_bulb_night", _pct(below[night]), int(night.sum())),
-        ("pct_below_wet_bulb_day", _pct(below[~night]), int((~night).sum())),
+        ("rows_far_below_wet_bulb", int(far.sum()), len(far)),
+        ("pct_far_below_wet_bulb", _pct(far), len(far)),
+        ("pct_far_below_wet_bulb_night", _pct(far[night]), int(night.sum())),
+        ("pct_far_below_wet_bulb_day", _pct(far[~night]), int((~night).sum())),
     ]
-    non_standard = below.mean() > settings.wbgt_below_wet_bulb_max_share + EPS
+    non_standard = far.mean() > settings.wbgt_below_wet_bulb_max_share + EPS
     verdict = "non-standard" if non_standard else "within tolerance"
     return _results("A03", "wbgt_fw_c", metrics, verdict, note)
 
 
 def audit_wbgt_standard() -> list[dict]:
-    """A04: firmware WBGT against a standards-grade estimate. Waits for light calibration."""
-    note = "needs solar irradiance in W/m²; the SI1145 light counts are not calibrated yet"
+    """A04: firmware WBGT against a standards-grade estimate, which the application computes."""
+    note = "computed by Joto Guard: python -m joto_guard wbgt writes wbgt_firmware_by_hour.csv"
     return _results("A04", "wbgt_fw_c", [("diff_by_local_hour_c", None, 0)], "pending", note)
 
 

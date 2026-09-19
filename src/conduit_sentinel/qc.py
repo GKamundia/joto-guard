@@ -40,7 +40,7 @@ RULES: dict[str, Rule] = {
         Rule("R13", Flag.BAD, "Gust direction column duplicates gust speed"),
         Rule("R14", None, "Late report or gap before this observation"),
         Rule("R15", None, "Non-zero device health code"),
-        Rule("R16", Flag.SUSPECT, "Firmware WBGT below the firmware wet bulb"),
+        Rule("R16", Flag.SUSPECT, "Firmware WBGT far below the firmware wet bulb"),
     )
 }
 
@@ -120,7 +120,8 @@ def apply_qc(
     gaps, intervals = _check_intervals(obs, interval_s, config, coverage, flags)
     code = obs["health_code"]
     flags.mark("R15", "health_code", code.notna() & (code != 0))
-    flags.mark("R16", "wbgt_fw_c", obs["wbgt_fw_c"] < obs["wet_bulb_fw_c"] - EPS)
+    margin = config.qc.wbgt_below_wet_bulb_margin_c
+    flags.mark("R16", "wbgt_fw_c", obs["wbgt_fw_c"] < obs["wet_bulb_fw_c"] - margin - EPS)
 
     obs_qc = obs.copy()
     for variable in VARIABLES:

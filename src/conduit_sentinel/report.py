@@ -49,7 +49,7 @@ def build_report(
         "light": _light_summary(obs, config),
         "audits": _records(audits),
         "device_codes": _device_codes(obs),
-        "recommendations": recommendations(qc, health, audits),
+        "recommendations": recommendations(qc, health, audits, config),
         "rules": {rule.id: rule.description for rule in RULES.values()},
         "links": dict(links or DEFAULT_LINKS),
     }
@@ -70,7 +70,9 @@ def score_rule_text(config: Config) -> str:
     )
 
 
-def recommendations(qc: QCResult, health: pd.DataFrame, audits: pd.DataFrame) -> list[dict]:
+def recommendations(
+    qc: QCResult, health: pd.DataFrame, audits: pd.DataFrame, config: Config
+) -> list[dict]:
     """Suggestions for the station owners, worded by the strength of the evidence.
 
     Each one appears only when the data in this report triggers it.
@@ -80,7 +82,7 @@ def recommendations(qc: QCResult, health: pd.DataFrame, audits: pd.DataFrame) ->
         *_empty_channel_recommendations(qc.rule_hits, health),
         *_duplicate_column_recommendations(qc),
         *_device_code_recommendations(qc.obs),
-        *_wbgt_recommendations(audits),
+        *_wbgt_recommendations(audits, config.qc.wbgt_below_wet_bulb_margin_c),
     ]
 
 
@@ -340,7 +342,7 @@ def _device_code_recommendations(obs: pd.DataFrame) -> list[dict]:
     ]
 
 
-def _wbgt_recommendations(audits: pd.DataFrame) -> list[dict]:
+def _wbgt_recommendations(audits: pd.DataFrame, margin_c: float) -> list[dict]:
     a03 = audits[audits["audit_id"] == "A03"]
     if a03.empty or a03["verdict"].iloc[0] != "non-standard":
         return []
@@ -349,10 +351,11 @@ def _wbgt_recommendations(audits: pd.DataFrame) -> list[dict]:
         {
             "title": "Consider a black-globe thermometer",
             "detail": (
-                f"The firmware WBGT was below the firmware wet bulb on "
-                f"{value['pct_below_wet_bulb']:g} % of rows "
-                f"({value['pct_below_wet_bulb_night']:g} % at night), which a standard WBGT "
-                "does not do. A black-globe sensor would let WBGT be measured, not estimated."
+                f"The firmware WBGT was more than {margin_c:g} °C below the firmware wet "
+                f"bulb on {value['pct_far_below_wet_bulb']:g} % of rows "
+                f"({value['pct_far_below_wet_bulb_night']:g} % at night). A standard WBGT "
+                "dips below the wet bulb only a little, on calm, clear nights. A black-globe "
+                "sensor would let WBGT be measured, not estimated."
             ),
             "evidence_level": "non-standard firmware value",
             "rules": ["A03", "R16"],

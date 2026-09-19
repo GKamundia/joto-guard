@@ -1,6 +1,8 @@
 # Conduit Sentinel: specification
 
-Version 0.3, 17 Sep 2026. This is the build contract for `src/conduit_sentinel/`. Every expected value in section 11 was computed from the two organiser CSVs; if an implementation disagrees, check the implementation first, then raise it with the team.
+Version 0.4, 19 Sep 2026. This is the build contract for `src/conduit_sentinel/`. Every expected value in section 11 was computed from the two organiser CSVs; if an implementation disagrees, check the implementation first, then raise it with the team.
+
+Changes in 0.4 (see `decisions/0008-wbgt-below-wet-bulb-margin.md`): R16 and A03 count only rows where the firmware WBGT is more than 1.5 °C below the firmware wet bulb (`qc.wbgt_below_wet_bulb_margin_c`), because a standard WBGT itself dips a little below the wet bulb on calm, clear nights. A03 keeps the share below at all for context, and section 11's A03 values change.
 
 Changes in 0.3 (see `decisions/0005-days-outside-the-exports.md`): coverage windows tell "the station missed reports" apart from "these days were never exported", so `gaps` gains a `kind` column, `health_daily` covers only days an export reaches, and the cadence figures ignore the space between exports.
 
@@ -120,7 +122,7 @@ Thresholds go in `config/qc_rules.yaml`. The values below are the starting defau
 | R13 | wind_gust_dir_deg (daily) | Identical to wind_gust_ms | ≥ 99 % of rows in the day | 2; exclude the column |
 | R14 | time | Interval between rows | above 300 s creates a `gaps` row; 120 to 300 s inclusive counts as "late" (info only) | none |
 | R15 | health_code | Non-zero device code | any non-zero | info note only (meaning undocumented) |
-| R16 | wbgt_fw_c | Below the firmware wet bulb | wbgt_fw_c < wet_bulb_fw_c | 1, note `wbgt_below_wet_bulb` |
+| R16 | wbgt_fw_c | Far below the firmware wet bulb | wbgt_fw_c < wet_bulb_fw_c − 1.5 °C | 1 |
 
 ## 7. Flag codes
 
@@ -149,11 +151,13 @@ Weights (10, 2, 14.4) and the 5 % share come from config. The report must print 
 |---|---|---|---|
 | A01 | Firmware wet bulb vs Stull (2011) applied to t_sht_c and rh_pct | Mean and max absolute difference | "matches Stull" if MAE ≤ 0.1 °C |
 | A02 | Firmware heat index vs NWS Rothfusz heat index | MAE; note the NWS formula is designed for hot conditions | Report only |
-| A03 | Firmware WBGT vs firmware wet bulb | Share of rows where WBGT < wet bulb, split day and night (night = 19:00 to 05:59 EAT) | "non-standard" if the share is above 1 % |
-| A04 | Firmware WBGT vs a standards-grade estimate | Liljegren et al. (2008) via `pywbgt`, or `thermofeel`, or the Dimiceli approximation; needs calibrated solar input, so it waits for light calibration | Report difference by hour of day |
+| A03 | Firmware WBGT vs firmware wet bulb | Share of rows where WBGT < wet bulb; share where it is more than 1.5 °C below, split day and night (night = 19:00 to 05:59 EAT) | "non-standard" if the share more than 1.5 °C below is above 1 % |
+| A04 | Firmware WBGT vs a standards-grade estimate | Liljegren et al. (2008); needs calibrated solar input, which the application layer provides | Report difference by hour of day |
 | A05 | Thermometer agreement | Pairwise mean and max absolute differences, plus the mean signed difference (first minus second) so a systematic offset shows | Report only |
 
-A04 depends on converting light counts to irradiance, which belongs to the application layer; stub it until then.
+A04 depends on converting light counts to irradiance, which belongs to the application layer. Joto Guard computes it (`python -m joto_guard wbgt`, decision 0007); Sentinel's own A04 row stays a pointer to it.
+
+Why the 1.5 °C margin in R16 and A03: on a calm, clear night the globe and the wick radiate to a sky colder than the air, so a standard WBGT can sit below the wet bulb. The Liljegren model does so on 34 % of this station's night hours, by at most 0.76 °C, and by at most 1.4 °C in still air between 8 and 25 °C. Dips beyond 1.5 °C are not explained that way.
 
 ## 10. Station Health Report contents
 
@@ -197,7 +201,7 @@ Files: `data/raw/organiser/` (see its README for exact names).
 | Longest identical runs | t_sht_c 48 rows; rh_pct 12; p_station_hpa 18; wind_speed_ms 317 (all zeros, so R08c does not fire) |
 | Max pairwise thermometer difference | SHT–MCP 1.6 °C; SHT–BMX 1.3 °C; BMX–MCP 1.1 °C |
 | A01 Stull | MAE 0.032 °C; max 0.103 °C; verdict "matches Stull" |
-| A03 WBGT below wet bulb | 5,833 of 11,302 rows (51.6 %); night 71.3 %; day 34.9 %; verdict "non-standard" |
+| A03 WBGT below wet bulb | 5,833 of 11,302 rows below (51.6 %); 3,850 (34.1 %) more than 1.5 °C below: night 51.3 %, day 19.5 %; verdict "non-standard" |
 | Daily health scores | 28 Aug 80.0; 29 Aug 80.0; 30 Aug 79.2; 31 Aug 78.0; 1 Sep 80.0; 2 Sep 80.0; 3 Sep 80.0; 4 Sep 80.0 (bad groups every day: battery, wind_gust_dir; suspect on 31 Aug: rain_gauge_2) |
 | Observed ranges (merged) | t_sht_c 11.8 to 29.5; t_bmx_c 11.4 to 28.8; t_mcp_c 11.6 to 29.0; rh_pct 30.2 to 95.0; p_station_hpa 848.4 to 856.1; wind_speed_ms 0.0 to 3.0; wind_gust_ms 0.0 to 15.7; light_vis 257 to 1200; light_ir 251 to 10965; uv 0.0 to 5.1 |
 

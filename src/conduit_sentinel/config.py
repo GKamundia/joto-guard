@@ -42,6 +42,7 @@ class QCThresholds:
     duplicate_column_share: float
     late_interval_s: float
     gap_interval_s: float
+    wbgt_below_wet_bulb_margin_c: float
 
 
 @dataclass(frozen=True)
@@ -153,6 +154,8 @@ def _validate(config: Config) -> None:
     qc = config.qc
     if not 0 < qc.late_interval_s < qc.gap_interval_s:
         raise ConfigError("qc.late_interval_s must be positive and below qc.gap_interval_s")
+    if qc.wbgt_below_wet_bulb_margin_c < 0:
+        raise ConfigError("qc.wbgt_below_wet_bulb_margin_c must not be negative")
     shares = {
         "qc.duplicate_column_share": qc.duplicate_column_share,
         "health.max_flagged_share": config.health.max_flagged_share,

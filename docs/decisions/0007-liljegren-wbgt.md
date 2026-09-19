@@ -39,8 +39,8 @@ Date: 18 Sep 2026. Status: accepted.
 
 - **The model does it too.** It puts WBGT below the firmware's wet bulb on 34 % of the station's night hours, by at most 0.76 °C. Across 8 to 25 °C and 30 to 100 % humidity in still air, its lowest is 1.4 °C below.
 - **The Stull formula adds to the effect.** It assumes sea-level pressure. At the station's 852 hPa the psychrometric wet bulb is 0.25 °C lower than at sea level, and 0.27 °C below Stull's, on average.
-- **The firmware finding stands on its size.** Its WBGT is more than 1.5 °C below the wet bulb on 38.7 % of all rows, and up to 3.4 °C below.
-- **Proposed, not made:** rules R16 and A03 should count only rows more than 1.5 °C below the wet bulb. This changes spec thresholds, so it waits for the team.
+- **The firmware finding stands on its size.** Its WBGT is more than 1.5 °C below the wet bulb on 38.6 % of all rows, and up to 3.4 °C below.
+- **Proposed:** rules R16 and A03 should count only rows more than 1.5 °C below the wet bulb. Accepted by the team on 19 Sep 2026 (decision 0008).
 
 The build plan's acceptance checks change accordingly:
 

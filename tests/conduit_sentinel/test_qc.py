@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import date
 
 import numpy as np
@@ -251,11 +252,19 @@ def test_non_zero_health_code_is_noted_but_not_flagged(make_obs, config):
     assert notes(result) == ["", "R15", ""]
 
 
-def test_wbgt_below_wet_bulb_is_suspect(make_obs, config):
-    result = apply_qc(make_obs(n=2, wet_bulb_fw_c=15.0, wbgt_fw_c=[14.9, 15.0]), config)
+def test_wbgt_far_below_wet_bulb_is_suspect(make_obs, config):
+    # a standard WBGT itself dips a little below the wet bulb on calm, clear nights
+    result = apply_qc(make_obs(n=3, wet_bulb_fw_c=15.0, wbgt_fw_c=[13.4, 13.5, 14.9]), config)
+
+    assert flags(result, "wbgt_fw_c") == [SUSPECT, GOOD, GOOD]
+    assert notes(result) == ["R16", "", ""]
+
+
+def test_wbgt_margin_comes_from_the_config(make_obs, config):
+    strict = replace(config, qc=replace(config.qc, wbgt_below_wet_bulb_margin_c=0.0))
+    result = apply_qc(make_obs(n=2, wet_bulb_fw_c=15.0, wbgt_fw_c=[14.9, 15.0]), strict)
 
     assert flags(result, "wbgt_fw_c") == [SUSPECT, GOOD]
-    assert notes(result) == ["R16", ""]
 
 
 def test_bad_outranks_suspect_and_notes_list_each_rule_once(make_obs, config):

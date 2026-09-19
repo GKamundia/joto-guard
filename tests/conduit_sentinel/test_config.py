@@ -32,6 +32,7 @@ def test_repository_config_holds_spec_defaults(config_path):
     assert config.qc.rain_disagreement_mm == 0.4
     assert config.qc.duplicate_column_share == 0.99
     assert (config.qc.late_interval_s, config.qc.gap_interval_s) == (120, 300)
+    assert config.qc.wbgt_below_wet_bulb_margin_c == 1.5
     assert config.health.bad_group_penalty == 10
     assert config.health.suspect_group_penalty == 2
     assert config.health.missing_minutes_per_point == 14.4
@@ -60,6 +61,7 @@ def test_unknown_key_is_rejected(raw):
         ("ranges", "rain_mm", [0.0], r"\[min, max\]"),
         ("qc", "late_interval_s", 400, "below qc.gap_interval_s"),
         ("qc", "duplicate_column_share", 1.5, "between 0 and 1"),
+        ("qc", "wbgt_below_wet_bulb_margin_c", -0.5, "must not be negative"),
         ("health", "bad_group_penalty", "ten", "must be a number"),
         ("audit", "night_start_hour", 24, "hour from 0 to 23"),
         ("station", "display_timezone", "Mars/Olympus", "unknown time zone"),

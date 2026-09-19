@@ -29,6 +29,7 @@ qc:
   duplicate_column_share: 0.99  # R13
   late_interval_s: 120          # R14, late when 120 <= interval <= 300
   gap_interval_s: 300           # R14, gap when interval > 300
+  wbgt_below_wet_bulb_margin_c: 1.5  # R16 and A03 (decision 0008)
 
 health:
   bad_group_penalty: 10

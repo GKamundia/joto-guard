@@ -51,22 +51,34 @@ def test_heat_index_is_reported_without_a_verdict(make_obs, config):
     assert row["value"] >= 0
 
 
-def test_wbgt_below_wet_bulb_is_split_by_local_night_and_day(make_obs, config):
+def test_wbgt_far_below_wet_bulb_is_split_by_local_night_and_day(make_obs, config):
     # 00, 06, 12, 18 UTC are 03, 09, 15, 21 EAT: night, day, day, night
     obs = make_obs(
         offsets_s=[0, 6 * 3600, 12 * 3600, 18 * 3600],
         wet_bulb_fw_c=15.0,
-        wbgt_fw_c=[14.0, 14.0, 16.0, 14.0],
+        wbgt_fw_c=[13.0, 14.0, 16.0, 13.0],
     )
     audits = audits_for(obs, config)
 
     assert metric(audits, "A03", "rows_below_wet_bulb")["value"] == 3
     assert metric(audits, "A03", "pct_below_wet_bulb")["value"] == 75.0
-    night = metric(audits, "A03", "pct_below_wet_bulb_night")
-    day = metric(audits, "A03", "pct_below_wet_bulb_day")
+    assert metric(audits, "A03", "rows_far_below_wet_bulb")["value"] == 2
+    assert metric(audits, "A03", "pct_far_below_wet_bulb")["value"] == 50.0
+    night = metric(audits, "A03", "pct_far_below_wet_bulb_night")
+    day = metric(audits, "A03", "pct_far_below_wet_bulb_day")
     assert (night["value"], night["n_rows"]) == (100.0, 2)
-    assert (day["value"], day["n_rows"]) == (50.0, 2)
+    assert (day["value"], day["n_rows"]) == (0.0, 2)
     assert set(audits.loc[audits["audit_id"] == "A03", "verdict"]) == {"non-standard"}
+    assert "more than 1.5 °C below" in metric(audits, "A03", "pct_far_below_wet_bulb")["note"]
+
+
+def test_small_dips_below_wet_bulb_are_within_tolerance(make_obs, config):
+    # a standard WBGT dips this far on calm, clear nights
+    audits = audits_for(make_obs(n=10, wet_bulb_fw_c=15.0, wbgt_fw_c=14.0), config)
+
+    assert metric(audits, "A03", "pct_below_wet_bulb")["value"] == 100.0
+    row = metric(audits, "A03", "pct_far_below_wet_bulb")
+    assert (row["value"], row["verdict"]) == (0.0, "within tolerance")
 
 
 def test_wbgt_never_below_wet_bulb_is_within_tolerance(make_obs, config):
