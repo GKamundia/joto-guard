@@ -1,6 +1,8 @@
 # AI usage log
 
-The Hack The Weather rules allow AI tools with disclosure, and every team member must be able to explain the solution. Add a row for each substantial AI-assisted piece of work. The README's "AI usage" section is summarised from this file.
+The AI tool used in this project is Anthropic's Claude: Claude Code, and Claude in Cowork during planning. It was used for debugging and explaining code errors, for writing code, tests and documentation, and for research and data analysis. The team reviewed and ran every change and can explain each part of the solution, as the Hack The Weather rules require.
+
+Each row records one substantial piece of AI-assisted work. The README's "AI usage" section is summarised from this file.
 
 | Date | Tool | What it helped with | Files | Reviewed and understood by |
 |---|---|---|---|---|
