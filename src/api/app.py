@@ -1,4 +1,5 @@
-"""FastAPI service over the Sentinel outputs: the Station Health Report and its tables."""
+"""FastAPI service over the Sentinel and Joto Guard outputs: the Station Health Report, its
+tables, the station's WBGT and the heat guidance."""
 
 import os
 from collections.abc import Sequence
@@ -16,9 +17,30 @@ from conduit_sentinel import __version__
 from conduit_sentinel.report import to_json_ready
 from conduit_sentinel.schema import VARIABLE_COLUMNS
 
-from .store import DOWNLOADS, OutputsMissing, OutputStore, SentinelOutputs, records
+from .store import (
+    DOWNLOADS,
+    CachedFile,
+    OutputsMissing,
+    OutputStore,
+    SentinelOutputs,
+    read_json,
+    records,
+)
 
 DEFAULT_DATA_DIR = Path("data/processed")
+DEFAULT_CONFIG_DIR = Path("config")
+JOTO_ADVICE = "Run 'python -m joto_guard wbgt' and 'python -m joto_guard forecast' first."
+WBGT_COLUMNS = [
+    "hour_utc",
+    "t_air_c",
+    "rh_pct",
+    "wind_2m_ms",
+    "ghi_wm2",
+    "tg_c",
+    "tnwb_c",
+    "wbgt_c",
+    "wbgt_fw_c",
+]
 DEFAULT_ORIGINS = ("http://localhost:5173", "http://127.0.0.1:5173")
 
 UNITS = {column.name: column.unit for column in VARIABLE_COLUMNS}
@@ -32,8 +54,21 @@ pipeline refreshes the API without a restart.
 """
 
 
-def create_app(data_dir: str | Path | None = None, origins: Sequence[str] | None = None) -> FastAPI:
+def create_app(
+    data_dir: str | Path | None = None,
+    origins: Sequence[str] | None = None,
+    config_dir: str | Path | None = None,
+) -> FastAPI:
     store = OutputStore(data_dir or os.environ.get("SENTINEL_DATA_DIR", DEFAULT_DATA_DIR))
+    configs = Path(config_dir or os.environ.get("JOTO_CONFIG_DIR", DEFAULT_CONFIG_DIR))
+    guidance_file = CachedFile(store.directory / "heat_guidance.json", read_json, JOTO_ADVICE)
+    wbgt_file = CachedFile(store.directory / "wbgt_hourly.csv", pd.read_csv, JOTO_ADVICE)
+    firmware_file = CachedFile(
+        store.directory / "wbgt_firmware_by_hour.csv", pd.read_csv, JOTO_ADVICE
+    )
+    calibration_file = CachedFile(
+        configs / "solar_calibration.json", read_json, "Run 'python -m joto_guard calibrate-light'."
+    )
     app = FastAPI(
         title="Conduit Sentinel API",
         version=__version__,
@@ -54,6 +89,12 @@ def create_app(data_dir: str | Path | None = None, origins: Sequence[str] | None
         except OutputsMissing as missing:
             raise HTTPException(status_code=503, detail=str(missing)) from missing
 
+    def cached(file: CachedFile) -> Any:
+        try:
+            return file.read()
+        except OutputsMissing as missing:
+            raise HTTPException(status_code=503, detail=str(missing)) from missing
+
     @app.get("/", summary="What this service offers")
     def index() -> dict[str, Any]:
         return {
@@ -65,6 +106,8 @@ def create_app(data_dir: str | Path | None = None, origins: Sequence[str] | None
                 "/v1/station-health",
                 "/v1/qc?days=7",
                 "/v1/history?var=t_sht_c",
+                "/v1/wbgt?days=7",
+                "/v1/heat-guidance",
                 "/v1/dataset/{name}",
             ],
         }
@@ -158,6 +201,46 @@ def create_app(data_dir: str | Path | None = None, origins: Sequence[str] | None
                 "series": records(selected, ["hour_utc", var, "n_obs", "coverage_pct"]),
             }
         )
+
+    @app.get(
+        "/v1/wbgt",
+        summary="The station's hourly WBGT, and the firmware's column compared with it",
+        description="Liljegren WBGT from the station's quality-controlled inputs (decision "
+        "0007), the firmware WBGT minus it by local hour, and the light-sensor calibration.",
+    )
+    def wbgt(
+        days: Annotated[int, Query(ge=1, le=400, description="how many days back")] = 7,
+    ) -> dict[str, Any]:
+        table = cached(wbgt_file)
+        hours = pd.to_datetime(table["hour_utc"], utc=True)
+        recent = table[hours > hours.max() - pd.Timedelta(days=days)]
+        calibration = cached(calibration_file)
+        return to_json_ready(
+            {
+                "method": "Liljegren et al. (2008), J. Occup. Environ. Hyg. 5, 645-655",
+                "n_hours": len(recent),
+                "hours": records(recent, WBGT_COLUMNS),
+                "firmware_by_local_hour": records(cached(firmware_file)),
+                "light_calibration": {
+                    "formula": calibration["formula"],
+                    "a": calibration["a"],
+                    "b": calibration["b"],
+                    "dark_floor_counts": calibration["dark_floor_counts"],
+                    "reference": calibration["reference"],
+                    "held_out": calibration["held_out"],
+                },
+            }
+        )
+
+    @app.get(
+        "/v1/heat-guidance",
+        summary="Heat guidance by type of work for each forecast hour",
+        description="What python -m joto_guard forecast last wrote: WBGT with its band, NIOSH "
+        "levels and allowed work minutes per hour for each type of work (decision 0011).",
+        response_model=None,
+    )
+    def heat_guidance() -> dict[str, Any]:
+        return cached(guidance_file)
 
     @app.get("/v1/dataset/{name}", summary="Download a quality-controlled table")
     def dataset(

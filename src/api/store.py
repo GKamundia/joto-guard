@@ -1,6 +1,7 @@
-"""Read the Sentinel outputs from disk and keep them until the files change."""
+"""Read the Sentinel and Joto Guard outputs from disk and keep them until the files change."""
 
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -18,8 +19,16 @@ TABLE_FILES = {
     "audits": "audit_results.csv",
 }
 
-# What /v1/dataset will hand out: everything the pipeline writes.
-DOWNLOADS = frozenset({REPORT_FILE, "obs_qc.csv", *TABLE_FILES.values()})
+# Written by python -m joto_guard wbgt and forecast.
+JOTO_FILES = (
+    "wbgt_hourly.csv",
+    "wbgt_firmware_by_hour.csv",
+    "wbgt_forecast.csv",
+    "heat_guidance.json",
+)
+
+# What /v1/dataset will hand out: everything the pipelines write.
+DOWNLOADS = frozenset({REPORT_FILE, "obs_qc.csv", *TABLE_FILES.values(), *JOTO_FILES})
 
 
 class OutputsMissing(RuntimeError):
@@ -93,6 +102,31 @@ class OutputStore:
             f"No Sentinel outputs in {self.directory}. Run "
             f"'python -m conduit_sentinel data/raw/organiser --out {self.directory}' first."
         )
+
+
+class CachedFile:
+    """One output file, read again only when it changes on disk."""
+
+    def __init__(self, path: Path, reader: Callable[[Path], Any], advice: str):
+        self.path = path
+        self._reader = reader
+        self._advice = advice
+        self._key: tuple[int, int] | None = None
+        self._value: Any = None
+
+    def read(self) -> Any:
+        if not self.path.is_file():
+            raise OutputsMissing(f"{self.path} is missing. {self._advice}")
+        stat = self.path.stat()
+        key = (stat.st_mtime_ns, stat.st_size)
+        if key != self._key:
+            self._value = self._reader(self.path)
+            self._key = key
+        return self._value
+
+
+def read_json(path: Path) -> Any:
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def records(frame: pd.DataFrame, columns: list[str] | None = None) -> list[dict]:
