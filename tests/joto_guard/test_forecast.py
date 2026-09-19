@@ -160,6 +160,8 @@ def test_command_line_computes_a_saved_forecast(tmp_path, fixtures_dir, config_p
             str(saved),
             "--config",
             str(config_path),
+            "--correction",
+            str(tmp_path / "none.json"),
         ]
     )
 
@@ -167,9 +169,10 @@ def test_command_line_computes_a_saved_forecast(tmp_path, fixtures_dir, config_p
     table = pd.read_csv(processed / "wbgt_forecast.csv")
     assert len(table) == 48
     assert table["hour_utc"].iloc[0] == "2026-09-19T00:00:00Z"
+    assert "wbgt_corrected_c" not in table
     out = capsys.readouterr().out
     assert "2026-09-20: highest WBGT" in out
-    assert "not yet corrected" in out
+    assert "Raw model output" in out
 
 
 def test_command_line_saves_what_it_fetches(tmp_path, ecmwf, config_path, monkeypatch):
@@ -194,6 +197,8 @@ def test_command_line_saves_what_it_fetches(tmp_path, ecmwf, config_path, monkey
             "2",
             "--config",
             str(config_path),
+            "--correction",
+            str(tmp_path / "none.json"),
         ]
     )
 

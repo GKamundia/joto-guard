@@ -2,6 +2,7 @@
 
 python -m joto_guard calibrate-light --reference <file>
 python -m joto_guard wbgt
+python -m joto_guard fit-correction --past-forecasts <file>
 python -m joto_guard forecast
 """
 
@@ -18,7 +19,15 @@ from conduit_sentinel.audit import is_night
 from conduit_sentinel.config import load_config
 from conduit_sentinel.pipeline import csv_ready
 
-from .forecast import DEFAULT_MODEL, FORECAST_URL, fetch_json, forecast_wbgt, request_params
+from . import bias
+from .forecast import (
+    DEFAULT_MODEL,
+    FORECAST_URL,
+    fetch_json,
+    forecast_wbgt,
+    request_params,
+    variable_name,
+)
 from .solar_calibration import calibrate, ghi_hourly, load, reference_from_open_meteo, save
 from .station_wbgt import firmware_by_local_hour, mean_difference, wbgt_hourly
 from .wbgt import REFERENCE_HEIGHT_M
@@ -108,7 +117,38 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=Path("data/reference"),
         help="where a fetched response is saved (default: data/reference)",
     )
+    forecast.add_argument(
+        "--correction",
+        type=Path,
+        default=Path("config/forecast_correction.json"),
+        help="correction towards the station, from fit-correction (skipped if the file is absent)",
+    )
     forecast.set_defaults(handler=station_forecast)
+
+    correction = commands.add_parser(
+        "fit-correction",
+        help="fit the forecast's correction towards the station, by hour of day",
+        description="Compare past forecasts with the station's WBGT (wbgt_hourly.csv) and save "
+        "the hourly offsets and uncertainty band.",
+    )
+    correction.add_argument(
+        "--processed", type=Path, default=Path("data/processed"), help=PROCESSED_HELP
+    )
+    correction.add_argument(
+        "--past-forecasts",
+        type=Path,
+        required=True,
+        help="Open-Meteo response saved by scripts/fetch_past_forecasts.py",
+    )
+    correction.add_argument("--model", default=DEFAULT_MODEL)
+    correction.add_argument(
+        "--config",
+        type=Path,
+        default=Path("config/qc_rules.yaml"),
+        help="Sentinel configuration, for the local time zone",
+    )
+    correction.add_argument("--out", type=Path, default=Path("config/forecast_correction.json"))
+    correction.set_defaults(handler=fit_correction)
 
     args = parser.parse_args(argv)
     try:
@@ -227,22 +267,66 @@ def station_forecast(args: argparse.Namespace) -> int:
         source.write_text(json.dumps(payload), encoding="utf-8")
 
     table = forecast_wbgt(payload, latitude, longitude)
+    correction = bias.load(args.correction) if args.correction.exists() else None
+    if correction is not None:
+        table = bias.apply(table, correction)
     out = args.processed / "wbgt_forecast.csv"
     csv_ready(table).to_csv(out, index=False)
 
     timezone = load_config(args.config).station.display_timezone
     local = table["hour_utc"].dt.tz_convert(timezone)
+    column = "wbgt_c" if correction is None else "wbgt_corrected_c"
     print(f"Forecast from {source}: {len(table)} hours")
     for day, hours in table.groupby(local.dt.date):
         if len(hours) < MIN_HOURS_PER_DAY:
             continue
-        peak = hours.loc[hours["wbgt_c"].idxmax()]
+        peak = hours.loc[hours[column].idxmax()]
+        band = (
+            ""
+            if correction is None
+            else f" (likely {peak['wbgt_low_c']:.1f} to {peak['wbgt_high_c']:.1f})"
+        )
         print(
-            f"  {day}: highest WBGT {peak['wbgt_c']:.1f} degC at "
+            f"  {day}: highest WBGT {peak[column]:.1f} degC{band} at "
             f"{peak['hour_utc'].tz_convert(timezone):%H:%M} ({len(hours)} hours)"
         )
-    print("Raw model output, not yet corrected to the station")
+    if correction is None:
+        print(f"Raw model output: no correction at {args.correction}")
+    else:
+        print(f"Corrected towards the station with {args.correction}")
     print(f"Wrote {out}")
+    return 0
+
+
+def fit_correction(args: argparse.Namespace) -> int:
+    report = json.loads((args.processed / "report.json").read_text(encoding="utf-8"))
+    station = pd.read_csv(args.processed / "wbgt_hourly.csv")
+    station["hour_utc"] = pd.to_datetime(station["hour_utc"], utc=True)
+    payload = json.loads(args.past_forecasts.read_text(encoding="utf-8"))
+    timezone = load_config(args.config).station.display_timezone
+
+    latitude, longitude = report["station"]["latitude"], report["station"]["longitude"]
+    leads = [day for day in range(8) if variable_name("temperature_2m", day) in payload["hourly"]]
+    forecasts = {day: forecast_wbgt(payload, latitude, longitude, day) for day in leads}
+    correction = bias.fit(bias.pair_forecasts(station, forecasts, timezone), args.model, timezone)
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    bias.save(correction, args.out)
+
+    overall = correction.held_out["all"]
+    print(
+        f"Fitted on {correction.n_days} days ({correction.first_day} to {correction.last_day}), "
+        f"forecasts made {leads[0]} to {leads[-1]} days ahead, {correction.n_pairs} pairs"
+    )
+    print(
+        "Mean absolute error on days left out: "
+        f"raw {overall['raw']['mae_c']:g} degC, corrected {overall['corrected']['mae_c']:g} degC, "
+        f"the station's usual value for the hour {overall['station_usual']['mae_c']:g} degC"
+    )
+    print(
+        f"The 80 % band held the station value {correction.held_out['band_held_station_pct']:g} % "
+        "of the time"
+    )
+    print(f"Wrote {args.out}")
     return 0
 
 
