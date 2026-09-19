@@ -18,6 +18,10 @@ async function get(path) {
 
 export const fetchStationHealth = () => get("/v1/station-health");
 
+export const fetchHeatGuidance = () => get("/v1/heat-guidance");
+
+export const fetchWbgt = (days = 7) => get(`/v1/wbgt?days=${days}`);
+
 export const datasetUrl = (name) => `${BASE}/v1/dataset/${name}`;
 
 export const apiDocsUrl = `${BASE}/docs`;

@@ -1,6 +1,6 @@
 import { count, number, stamp } from "../format";
 
-export default function Observations({ rain, light, codes }) {
+export default function Observations({ rain, light, codes, calibration }) {
   const rainDays = rain.daily.filter((day) => day.rain1_mm || day.rain2_mm);
   const zeroDays = new Map(rain.gauge_read_zero.map((row) => [row.date_utc, row.gauge]));
 
@@ -67,7 +67,17 @@ export default function Observations({ rain, light, codes }) {
         </div>
         <div>
           <dt>Calibrated to W/m²</dt>
-          <dd>{light.calibrated ? "yes" : "not yet"}</dd>
+          <dd>
+            {calibration
+              ? `yes, in Joto Guard against ERA5: error ${number(
+                  calibration.held_out.daylight.rmse_wm2,
+                  0,
+                )} W/m² in daylight, ${number(
+                  calibration.held_out.clear_reference_sky?.rmse_wm2,
+                  0,
+                )} under a clear sky`
+              : "not yet"}
+          </dd>
         </div>
       </dl>
 
