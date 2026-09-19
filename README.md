@@ -15,7 +15,15 @@ Keep "Known limitations" and "Reproducibility" as well: judges reward honesty an
 
 ## 2. Problem statement
 
-_TBD: the problem, who has it, where, with citations the team has read. Name the evidence limits._
+Heat already costs Kenya's outdoor workers. In 2024, heat exposure cost the country 1.1 billion potential labour hours, a record 51 hours per person, and 74 % of the loss was in agriculture (Lancet Countdown 2025 data sheet for Kenya).
+
+Around Juja, where the Conduit@Empathy1 station stands, much of the work is heavy and outdoors. Quarrying building stone is one of the municipality's most significant economic activities, fed by a construction boom, alongside farming (Juja Municipality Integrated Development Plan 2023–2028).
+
+Kenya Met's heat advisories give temperatures for whole counties with general advice. They do not say when a given kind of work should slow down.
+
+The station itself reports a wet bulb globe temperature (WBGT), the index occupational heat limits are written in. But its firmware value behaves as if the sun were not shining: at midday it reads about 6 °C below a standards-based estimate from the same sensors, so it could not be used to warn anyone.
+
+The evidence, its sources and its limits (we found no published heat study for Juja itself, and our station record covers only three cool-season weeks) are in [`docs/PROBLEM_EVIDENCE.md`](docs/PROBLEM_EVIDENCE.md).
 
 ## 3. Solution
 
@@ -141,7 +149,10 @@ _TBD: names and roles._
 
 ## 14. Future development
 
-_TBD_
+- **Kisumu and Mombasa.** The 3D-PAWS FEWS NET portal lists a 3D-PAWS station at Kisumu Airport and stations at KALRO Mtwapa (Kilifi, just north of Mombasa) and KALRO Matuga (Kwale). Both cities are hotter and more humid than Juja, with different outdoor work: rice and sugarcane farming and fishing around Kisumu; the port, processing industries and fishing in Mombasa. Given download access, each station needs only its own light calibration and forecast correction (details in [`docs/PROBLEM_EVIDENCE.md`](docs/PROBLEM_EVIDENCE.md), section 5).
+- **A live station feed.** With the portal's download permission, guidance could use the station's latest hour as well as the forecast.
+- **The hot season.** January to March is not in the record we have; a full year of station data would show how often the heat limits are crossed then.
+- **A measured globe temperature.** A black-globe thermometer beside the station would let WBGT be measured rather than modelled.
 
 ## 15. Licence
 
