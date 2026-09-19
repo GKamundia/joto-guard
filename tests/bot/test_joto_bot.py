@@ -93,3 +93,16 @@ def test_a_stale_document_is_fetched_again(fake_client):
 
     asyncio.run(guidance.get())
     assert asyncio.run(guidance.get()) == {"fetched": 2}
+
+
+def test_the_documented_commands_are_all_registered():
+    from joto_bot import build
+
+    application = build("123456:test-token-shaped-like-a-real-one", Guidance("http://api.test"))
+
+    registered = {
+        command
+        for handler in application.handlers[0]
+        for command in getattr(handler, "commands", ())
+    }
+    assert registered == {"start", "help", "now", "today", "tomorrow"}
