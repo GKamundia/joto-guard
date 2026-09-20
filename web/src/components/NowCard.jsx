@@ -1,4 +1,5 @@
 import { dayLabel, hourOfDay, number } from "../format";
+import { currentHour, nextSpell, reach } from "../guidance";
 
 const LEVEL_NAMES = {
   normal: "Normal",
@@ -7,40 +8,29 @@ const LEVEL_NAMES = {
   reschedule: "Reschedule",
 };
 
-/** The forecast hour we are in, or the next one if the record starts later. */
-export function currentHour(hours, now = Date.now()) {
+/** Shown when the build's forecast no longer reaches the present. */
+function OutOfDate({ guidance }) {
+  const { issuedAt, last } = reach(guidance);
   return (
-    hours.find((hour) => {
-      const start = Date.parse(hour.hour_utc);
-      return start <= now && now < start + 3600 * 1000;
-    }) ??
-    hours.find((hour) => Date.parse(hour.hour_utc) > now) ??
-    null
+    <section className="card now out-of-date">
+      <p className="now-when">No guidance for right now</p>
+      <p className="now-level">This forecast has run out</p>
+      <p className="now-sentence">
+        It was issued on {dayLabel(issuedAt)} and its last hour is {hourOfDay(last.local_time)} on{" "}
+        {dayLabel(last.local_time)}. The days below are the ones it covered. The station record and
+        its health report do not depend on it and are unaffected.
+      </p>
+      <p className="now-next">
+        Refresh it with <code>python -m joto_guard forecast</code>, or start the stack with{" "}
+        <code>docker compose up --build</code>, which refreshes the forecast before serving.
+      </p>
+    </section>
   );
-}
-
-/** The next run of hours at or above `level`, as local times, or null if there is none. */
-export function nextSpell(hours, workType, from = Date.now()) {
-  const ahead = hours.filter((hour) => Date.parse(hour.hour_utc) + 3600 * 1000 > from);
-  const start = ahead.findIndex((hour) => {
-    const level = hour.by_work_type[workType]?.level;
-    return level && level !== "normal";
-  });
-  if (start < 0) return null;
-  let end = start;
-  while (
-    end + 1 < ahead.length &&
-    ahead[end + 1].by_work_type[workType]?.level &&
-    ahead[end + 1].by_work_type[workType].level !== "normal"
-  ) {
-    end += 1;
-  }
-  return { from: ahead[start], until: ahead[end], hours: end - start + 1 };
 }
 
 export default function NowCard({ guidance, workType }) {
   const hour = currentHour(guidance.hours);
-  if (!hour) return null;
+  if (!hour) return <OutOfDate guidance={guidance} />;
 
   const advice = hour.by_work_type[workType];
   const level = advice?.level ?? "normal";

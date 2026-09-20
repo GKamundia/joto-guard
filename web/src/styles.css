@@ -253,6 +253,15 @@ header.page h1 span {
   font-variant-numeric: tabular-nums;
 }
 
+.masthead-facts .warn {
+  background: var(--suspect);
+  color: #fff;
+}
+
+.masthead-facts .warn dt {
+  opacity: 0.9;
+}
+
 .theme-toggle {
   font: inherit;
   font-size: 0.75rem;
@@ -865,6 +874,24 @@ button.link {
   background: linear-gradient(var(--danger-soft), transparent 9rem), var(--paper);
 }
 
+.card.now.out-of-date {
+  border-top-color: var(--suspect);
+  background: linear-gradient(var(--suspect-soft), transparent 9rem), var(--paper);
+}
+
+.card.now.out-of-date .now-level {
+  color: var(--suspect);
+  font-size: 1.7rem;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+  padding: 0.1rem 0.35rem;
+  border-radius: 5px;
+  background: var(--sunken);
+}
+
 .now-grid {
   display: grid;
   grid-template-columns: minmax(15rem, 1fr) minmax(18rem, 1.25fr);
@@ -1028,6 +1055,18 @@ button.link {
 .guidance-day.selected {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
+}
+
+/* Dimmed and labelled: shade alone would leave a colour-blind reader guessing which days
+   have already gone. */
+.guidance-day.past {
+  opacity: 0.75;
+}
+
+.guidance-day .pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
 }
 
 /* ---- Hour strip ----------------------------------------------------------- */

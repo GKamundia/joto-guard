@@ -16,6 +16,7 @@ import StationCard from "./components/StationCard";
 import StationMap from "./components/StationMap";
 import StationRecord from "./components/StationRecord";
 import { shortDay } from "./format";
+import { reach } from "./guidance";
 
 const TABS = [
   ["guidance", "Guidance"],
@@ -191,6 +192,7 @@ export default function App() {
 
   const station = report.station;
   const score = report.health.daily.at(-1)?.score;
+  const forecastReach = reach(guidance);
 
   return (
     <>
@@ -228,6 +230,12 @@ export default function App() {
                 <div>
                   <dt>Health</dt>
                   <dd>{score ?? "-"} / 100</dd>
+                </div>
+                <div className={forecastReach.ranOut ? "warn" : undefined}>
+                  <dt>Forecast</dt>
+                  <dd>
+                    {forecastReach.ranOut ? "ran out" : `issued ${shortDay(forecastReach.issuedAt)}`}
+                  </dd>
                 </div>
               </dl>
               <ThemeButton dark={dark} onToggle={toggleTheme} />

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { dayLabel, number } from "../format";
-import { currentHour } from "./NowCard";
+import { currentHour, hoursAhead } from "../guidance";
 
 const WORK_NAMES = {
   light: "Light work",
@@ -43,7 +43,7 @@ function byDay(hours) {
   return days;
 }
 
-function DaySummary({ day, workType, swahili, selected, onSelect }) {
+function DaySummary({ day, workType, swahili, past, selected, onSelect }) {
   const summary = day.by_work_type[workType];
   if (!summary || summary.hours < MIN_HOURS_PER_DAY) return null;
 
@@ -59,7 +59,9 @@ function DaySummary({ day, workType, swahili, selected, onSelect }) {
   return (
     <button
       type="button"
-      className={`guidance-day level-${summary.worst_level}${selected ? " selected" : ""}`}
+      className={`guidance-day level-${summary.worst_level}${past ? " past" : ""}${
+        selected ? " selected" : ""
+      }`}
       aria-pressed={selected}
       onClick={() => onSelect(selected ? null : day.date)}
     >
@@ -67,10 +69,11 @@ function DaySummary({ day, workType, swahili, selected, onSelect }) {
       <span className="peak">
         {number(summary.peak_wbgt_c)} °C <small>peak at {summary.peak_time}</small>
       </span>
-      <span>
+      <span className="pills">
         <span className={`pill ${LEVEL_PILL[summary.worst_level] ?? "quiet"}`}>
           {LEVEL_NAMES[summary.worst_level] ?? summary.worst_level}
         </span>
+        {past ? <span className="pill quiet">past</span> : null}
       </span>
       <span>{advice}</span>
       <span className="sw" lang="sw">
@@ -147,10 +150,19 @@ export default function HeatGuidance({ guidance, workType, onWorkType, error }) 
   const work = guidance.work_types[workType];
   const swahili = guidance.swahili;
   const now = Date.now();
-  const hours = guidance.hours.filter((hour) => {
-    if (day) return hour.local_time.startsWith(day);
-    return Date.parse(hour.hour_utc) + 3600 * 1000 > now;
-  });
+  const ahead = hoursAhead(guidance.hours, now);
+  const live = new Set(ahead.map((hour) => hour.local_time.slice(0, 10)));
+
+  // Once the forecast no longer reaches now there is no "hours ahead" to show, so the strip
+  // falls back to the last day it did cover rather than rendering nothing. That is the last
+  // whole day, on the same rule the day cards use, not the stub of hours the run ended on.
+  const ranOut = ahead.length === 0;
+  const covered = byDay(guidance.hours);
+  const lastWhole =
+    [...covered].reverse().find((group) => group.hours.length >= MIN_HOURS_PER_DAY) ??
+    covered.at(-1);
+  const onDay = day ?? (ranOut ? (lastWhole?.date ?? null) : null);
+  const hours = onDay ? guidance.hours.filter((hour) => hour.local_time.startsWith(onDay)) : ahead;
   const shown = picked && hours.some((hour) => hour.hour_utc === picked.hour_utc) ? picked : null;
   const here = currentHour(guidance.hours, now);
 
@@ -194,29 +206,30 @@ export default function HeatGuidance({ guidance, workType, onWorkType, error }) 
             day={item}
             workType={workType}
             swahili={swahili}
-            selected={item.date === day}
+            past={!live.has(item.date)}
+            selected={item.date === onDay}
             onSelect={setDay}
           />
         ))}
       </div>
 
       <h3>
-        {day ? dayLabel(day) : "The hours ahead"}
-        {day ? (
+        {onDay ? dayLabel(onDay) : "The hours ahead"}
+        {ranOut ? <> · the last day this forecast covered</> : null}
+        {!ranOut && day ? (
           <>
             {" · "}
             <button type="button" className="link" onClick={() => setDay(null)}>
               show the hours ahead instead
             </button>
           </>
-        ) : (
-          <> · choose a day above to see all of it</>
-        )}
+        ) : null}
+        {!ranOut && !day ? <> · choose a day above to see all of it</> : null}
       </h3>
 
       {byDay(hours).map((group) => (
         <div className="hour-block" key={group.date}>
-          {day ? null : <h4 className="hour-day">{dayLabel(group.date)}</h4>}
+          {onDay ? null : <h4 className="hour-day">{dayLabel(group.date)}</h4>}
           <div className="hours" aria-label={`Hourly levels for ${group.date}`}>
             {group.hours.map((hour) => {
               const advice = hour.by_work_type[workType];
