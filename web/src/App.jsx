@@ -17,6 +17,8 @@ import StationMap from "./components/StationMap";
 import StationRecord from "./components/StationRecord";
 import { shortDay } from "./format";
 import { reach } from "./guidance";
+import { readHash, writeHash } from "./hash";
+import { read, write } from "./storage";
 
 const TABS = [
   ["guidance", "Guidance"],
@@ -27,6 +29,8 @@ const TABS = [
 ];
 
 const THEME_KEY = "joto-theme";
+const WORK_KEY = "joto-work-type";
+const DEFAULT_WORK = "heavy";
 
 /** One fetch per endpoint, kept together so every tab reads the same load.
  *
@@ -61,39 +65,21 @@ function useJotoData() {
   return { ...data, failed, error };
 }
 
-/** Storage is unavailable in some private-browsing modes; the page still has to render. */
-function remember(key, value) {
-  try {
-    if (value === null) window.localStorage.removeItem(key);
-    else window.localStorage.setItem(key, value);
-  } catch {
-    // The choice then lasts for this visit only.
-  }
-}
-
-function storedTheme() {
-  try {
-    return window.localStorage.getItem(THEME_KEY) ?? "system";
-  } catch {
-    return "system";
-  }
-}
-
 function prefersDark() {
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
 }
 
 function useTheme() {
-  const [theme, setTheme] = useState(storedTheme);
+  const [theme, setTheme] = useState(() => read(THEME_KEY, "system"));
 
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "system") {
       delete root.dataset.theme;
-      remember(THEME_KEY, null);
+      write(THEME_KEY, null);
     } else {
       root.dataset.theme = theme;
-      remember(THEME_KEY, theme);
+      write(THEME_KEY, theme);
     }
   }, [theme]);
 
@@ -101,8 +87,17 @@ function useTheme() {
   return [dark, () => setTheme(dark ? "light" : "dark")];
 }
 
-function tabFromHash() {
-  const asked = window.location.hash.slice(1);
+/** The clock the page reads. Without it "right now" is only true until the hour turns. */
+function useNow() {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const tick = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(tick);
+  }, []);
+  return now;
+}
+
+function knownTab(asked) {
   return TABS.some(([key]) => key === asked) ? asked : "guidance";
 }
 
@@ -154,16 +149,30 @@ function LoadingPage() {
 export default function App() {
   const { guidance, report, wbgt, forecast, failed, error } = useJotoData();
   const [dark, toggleTheme] = useTheme();
-  const [tab, setTab] = useState(() => tabFromHash());
-  const [workType, setWorkType] = useState("heavy");
+  const now = useNow();
+  const [tab, setTab] = useState(() => knownTab(readHash().tab));
+  // A link that names the work wins over the last choice made on this device.
+  const [chosenWork, setChosenWork] = useState(() => readHash().work ?? read(WORK_KEY, DEFAULT_WORK));
+  const [day, setDay] = useState(() => readHash().day);
+
+  const chooseWork = (name) => {
+    setChosenWork(name);
+    write(WORK_KEY, name);
+  };
 
   useEffect(() => {
-    window.location.hash = tab;
-  }, [tab]);
+    const next = writeHash({ tab, work: chosenWork, day });
+    if (window.location.hash.slice(1) !== next) window.location.hash = next;
+  }, [tab, chosenWork, day]);
 
   // Back, forward and a pasted link all change the hash without remounting.
   useEffect(() => {
-    const follow = () => setTab(tabFromHash());
+    const follow = () => {
+      const state = readHash();
+      setTab(knownTab(state.tab));
+      if (state.work) setChosenWork(state.work);
+      setDay(state.day);
+    };
     window.addEventListener("hashchange", follow);
     return () => window.removeEventListener("hashchange", follow);
   }, []);
@@ -192,7 +201,8 @@ export default function App() {
 
   const station = report.station;
   const score = report.health.daily.at(-1)?.score;
-  const forecastReach = reach(guidance);
+  const forecastReach = reach(guidance, now);
+  const workType = guidance.work_types[chosenWork] ? chosenWork : DEFAULT_WORK;
 
   return (
     <>
@@ -265,8 +275,15 @@ export default function App() {
       <main>
         {tab === "guidance" ? (
           <>
-            <NowCard guidance={guidance} workType={workType} />
-            <HeatGuidance guidance={guidance} workType={workType} onWorkType={setWorkType} />
+            <NowCard guidance={guidance} workType={workType} now={now} />
+            <HeatGuidance
+              guidance={guidance}
+              workType={workType}
+              onWorkType={chooseWork}
+              day={day}
+              onDay={setDay}
+              now={now}
+            />
           </>
         ) : null}
 

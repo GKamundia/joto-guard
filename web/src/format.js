@@ -51,3 +51,14 @@ export const dayLabel = (date) => {
 
 /** The hour a local timestamp falls in, as "14:00". */
 export const hourOfDay = (localTime) => (isMissing(localTime) ? "-" : localTime.slice(11, 16));
+
+/** A gap ahead, as "2 h 40 min". Anything under a minute is not worth counting down. */
+export const duration = (ms) => {
+  const minutes = Math.round(ms / 60000);
+  if (minutes < 1) return "under a minute";
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours === 0) return `${rest} min`;
+  if (rest === 0) return `${hours} h`;
+  return `${hours} h ${rest} min`;
+};

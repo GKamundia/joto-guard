@@ -1,5 +1,5 @@
-import { dayLabel, hourOfDay, number } from "../format";
-import { currentHour, nextSpell, reach } from "../guidance";
+import { dayLabel, duration, hourOfDay, number } from "../format";
+import { currentHour, easesAt, nextSpell, reach } from "../guidance";
 
 const LEVEL_NAMES = {
   normal: "Normal",
@@ -28,13 +28,51 @@ function OutOfDate({ guidance }) {
   );
 }
 
-export default function NowCard({ guidance, workType }) {
-  const hour = currentHour(guidance.hours);
+/* What each level asks of a crew. The minutes themselves are in the tiles beside this line,
+   so the sentence names who has to change what, not the numbers again. */
+const ACTIONS = {
+  normal: "Work normally",
+  acclimatized_only: "New workers need breaks",
+  work_rest: "Everyone works in spells, resting in the shade",
+  reschedule: "Too hot for this work",
+};
+
+/** What to do, and until when.
+ *
+ * English only: the guidance document's Kiswahili covers the levels and the standing advice,
+ * and no reviewed wording exists for this sentence. It is shown below in Kiswahili as the
+ * level sentence, which is reviewed.
+ */
+function Action({ level, spell, relief, now }) {
+  // Normal counts down to the next hour that is worse; every other level counts down to
+  // the hour it comes back to normal.
+  const target = level === "normal" ? (spell?.from ?? null) : relief;
+  const lead = ACTIONS[level] ?? ACTIONS.normal;
+  const sentence = target
+    ? `${lead} until ${hourOfDay(target.local_time)}.`
+    : `${lead} for the rest of this forecast.`;
+  const away = target ? Date.parse(target.hour_utc) - now : 0;
+
+  return (
+    <p className="now-action">
+      {sentence}
+      {away > 0 ? (
+        <span className="now-countdown">
+          {level === "normal" ? `${duration(away)} from now` : `eases in ${duration(away)}`}
+        </span>
+      ) : null}
+    </p>
+  );
+}
+
+export default function NowCard({ guidance, workType, now = Date.now() }) {
+  const hour = currentHour(guidance.hours, now);
   if (!hour) return <OutOfDate guidance={guidance} />;
 
   const advice = hour.by_work_type[workType];
   const level = advice?.level ?? "normal";
-  const spell = nextSpell(guidance.hours, workType);
+  const spell = nextSpell(guidance.hours, workType, now);
+  const relief = level === "normal" ? null : easesAt(guidance.hours, workType, now);
   const limit = guidance.work_types[workType];
   const mightRise = advice?.level_if_high && advice.level_if_high !== level;
 
@@ -44,6 +82,7 @@ export default function NowCard({ guidance, workType }) {
         <div className="now-main">
           <p className="now-when">Right now · {hourOfDay(hour.local_time)} at the station</p>
           <p className="now-level">{LEVEL_NAMES[level]}</p>
+          <Action level={level} spell={spell} relief={relief} now={now} />
           <p className="now-reading">
             <strong>{number(hour.wbgt_c)} °C</strong> WBGT
             {hour.wbgt_low_c !== null

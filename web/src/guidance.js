@@ -38,6 +38,17 @@ export function hoursAhead(hours, now = Date.now()) {
   return hours.filter((hour) => Date.parse(hour.hour_utc) + HOUR_MS > now);
 }
 
+/** The first hour back at normal from `from`. Only meaningful while the current hour is not. */
+export function easesAt(hours, workType, from = Date.now()) {
+  return (
+    hours.find(
+      (hour) =>
+        Date.parse(hour.hour_utc) + HOUR_MS > from &&
+        hour.by_work_type[workType]?.level === "normal",
+    ) ?? null
+  );
+}
+
 /** When the document was written and how far its hours reach.
  *
  * A build carries the forecast that was current when its pipeline last ran, so a copy left

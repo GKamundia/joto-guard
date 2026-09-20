@@ -932,8 +932,31 @@ code {
   color: var(--danger-text);
 }
 
+/* The line a foreman actually acts on, so it sits directly under the level and above the
+   reading that justifies it. */
+.now-action {
+  margin: 0.35rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.4;
+  max-width: 40ch;
+}
+
+.now-countdown {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.5rem;
+  border-radius: var(--r-pill);
+  background: var(--sunken);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  white-space: nowrap;
+  vertical-align: 2px;
+}
+
 .now-reading {
-  margin: 0.35rem 0 0.6rem;
+  margin: 0.45rem 0 0.7rem;
   font-size: 0.85rem;
   color: var(--muted);
   font-variant-numeric: tabular-nums;

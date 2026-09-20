@@ -26,4 +26,6 @@ Guidance and Station health must load; Forecast and Station record say so and st
 - **Themes.** The page follows the device unless the header button sets `data-theme`, which is kept in `localStorage` and wins over the device setting.
 - **Severity is never colour alone.** Every level carries its name in text or a pill, because the four fills have to work for a colour-blind reader and in sunlight.
 - **Built mobile first and checked at 375 px**: cards stack, the tab row scrolls sideways instead of wrapping, and wide tables scroll inside their card rather than the page. From 62 rem the hour strip switches to one column per hour of the day, so the same hour lines up across days.
+- **The URL carries the view.** Tab, kind of work and chosen day live in the hash (`#guidance?work=heavy&day=2026-09-20`), so a supervisor can send a foreman the exact screen. A link that names the work beats the choice remembered on the device; a work type or day the link gets wrong is ignored rather than rendered empty.
+- **The page keeps its own clock.** `useNow` re-renders every 30 s, so "right now", the countdown and which days are behind us stay true without a reload.
 - **Layout belongs in the stylesheet.** The only inline styles left are the two that carry data: the matrix's column count and an hour's own column.

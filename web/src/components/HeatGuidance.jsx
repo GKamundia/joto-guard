@@ -134,8 +134,15 @@ function HourDetail({ hour, workType, guidance }) {
   );
 }
 
-export default function HeatGuidance({ guidance, workType, onWorkType, error }) {
-  const [day, setDay] = useState(null);
+export default function HeatGuidance({
+  guidance,
+  workType,
+  onWorkType,
+  day,
+  onDay,
+  now = Date.now(),
+  error,
+}) {
   const [picked, setPicked] = useState(null);
 
   if (!guidance) {
@@ -149,7 +156,8 @@ export default function HeatGuidance({ guidance, workType, onWorkType, error }) 
 
   const work = guidance.work_types[workType];
   const swahili = guidance.swahili;
-  const now = Date.now();
+  // A day out of a hand-edited link is ignored rather than shown as an empty strip.
+  const asked = guidance.days.some((item) => item.date === day) ? day : null;
   const ahead = hoursAhead(guidance.hours, now);
   const live = new Set(ahead.map((hour) => hour.local_time.slice(0, 10)));
 
@@ -161,8 +169,10 @@ export default function HeatGuidance({ guidance, workType, onWorkType, error }) 
   const lastWhole =
     [...covered].reverse().find((group) => group.hours.length >= MIN_HOURS_PER_DAY) ??
     covered.at(-1);
-  const onDay = day ?? (ranOut ? (lastWhole?.date ?? null) : null);
-  const hours = onDay ? guidance.hours.filter((hour) => hour.local_time.startsWith(onDay)) : ahead;
+  const shownDay = asked ?? (ranOut ? (lastWhole?.date ?? null) : null);
+  const hours = shownDay
+    ? guidance.hours.filter((hour) => hour.local_time.startsWith(shownDay))
+    : ahead;
   const shown = picked && hours.some((hour) => hour.hour_utc === picked.hour_utc) ? picked : null;
   const here = currentHour(guidance.hours, now);
 
@@ -207,29 +217,29 @@ export default function HeatGuidance({ guidance, workType, onWorkType, error }) 
             workType={workType}
             swahili={swahili}
             past={!live.has(item.date)}
-            selected={item.date === onDay}
-            onSelect={setDay}
+            selected={item.date === shownDay}
+            onSelect={onDay}
           />
         ))}
       </div>
 
       <h3>
-        {onDay ? dayLabel(onDay) : "The hours ahead"}
+        {shownDay ? dayLabel(shownDay) : "The hours ahead"}
         {ranOut ? <> · the last day this forecast covered</> : null}
-        {!ranOut && day ? (
+        {!ranOut && asked ? (
           <>
             {" · "}
-            <button type="button" className="link" onClick={() => setDay(null)}>
+            <button type="button" className="link" onClick={() => onDay(null)}>
               show the hours ahead instead
             </button>
           </>
         ) : null}
-        {!ranOut && !day ? <> · choose a day above to see all of it</> : null}
+        {!ranOut && !asked ? <> · choose a day above to see all of it</> : null}
       </h3>
 
       {byDay(hours).map((group) => (
         <div className="hour-block" key={group.date}>
-          {onDay ? null : <h4 className="hour-day">{dayLabel(group.date)}</h4>}
+          {shownDay ? null : <h4 className="hour-day">{dayLabel(group.date)}</h4>}
           <div className="hours" aria-label={`Hourly levels for ${group.date}`}>
             {group.hours.map((hour) => {
               const advice = hour.by_work_type[workType];
