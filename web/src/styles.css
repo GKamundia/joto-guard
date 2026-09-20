@@ -20,6 +20,7 @@
   --bad: #b0332b;
   --bad-soft: #fae5e3;
   --danger: #7f1d1d;
+  --danger-text: #7f1d1d;
   --danger-soft: #f5dedd;
   --absent: #a5b2af;
   --on-level: #ffffff;
@@ -63,7 +64,8 @@
     --suspect-soft: #31250f;
     --bad: #e0675e;
     --bad-soft: #331a18;
-    --danger: #c2564f;
+    --danger: #a33c3a;
+    --danger-text: #e88b86;
     --danger-soft: #2c1615;
     --absent: #55625e;
     --on-level: #08211d;
@@ -94,7 +96,8 @@
   --suspect-soft: #31250f;
   --bad: #e0675e;
   --bad-soft: #331a18;
-  --danger: #c2564f;
+  --danger: #a33c3a;
+  --danger-text: #e88b86;
   --danger-soft: #2c1615;
   --absent: #55625e;
   --on-level: #08211d;
@@ -512,8 +515,8 @@ td.filename {
   color: var(--bad);
 }
 .pill.danger {
-  background: var(--danger-soft);
-  color: var(--danger);
+  background: var(--danger);
+  color: #fff;
 }
 .pill.quiet {
   background: var(--sunken);
@@ -926,7 +929,7 @@ code {
   color: var(--bad);
 }
 .card.now.level-reschedule .now-level {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 
 .now-reading {
@@ -1134,6 +1137,7 @@ code {
 }
 .hour.level-reschedule {
   background: var(--danger);
+  color: #fff;
 }
 .hour.level-unknown {
   background: var(--absent);
