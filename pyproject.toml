@@ -21,7 +21,8 @@ api = [
     "uvicorn[standard]>=0.30",
 ]
 bot = [
-    "python-telegram-bot>=21",
+    # The job-queue extra is what lets the bot send without being asked.
+    "python-telegram-bot[job-queue]>=21",
     "httpx>=0.27",
 ]
 dev = [

@@ -9,6 +9,9 @@ from typing import Any
 
 DEFAULT_WORK_TYPE = "heavy"
 
+#: From least to most restrictive, matching joto_guard.bands.LEVELS.
+LEVELS = ("normal", "acclimatized_only", "work_rest", "reschedule")
+
 WORK_NAMES = {
     "light": "Light work",
     "moderate": "Moderate work",
@@ -17,6 +20,9 @@ WORK_NAMES = {
 }
 
 # What an hour above `normal` means in a list, where there is no room for the full sentence.
+#: A level at or above this is worth sending unprompted.
+ALERT_FROM = "work_rest"
+
 SHORT_LEVELS = {
     "acclimatized_only": "new workers need breaks",
     "work_rest": "work in spells",
@@ -169,3 +175,62 @@ def _hours_above_normal(
             continue
         watch.append((hour, advice))
     return watch
+
+
+def worst_ahead(
+    document: dict[str, Any], work_type: str, after: datetime, hours_ahead: int = 24
+) -> tuple[str | None, dict[str, Any] | None]:
+    """The worst level in the next `hours_ahead`, and the first hour that reaches it."""
+    until = after + timedelta(hours=hours_ahead)
+    worst: str | None = None
+    first: dict[str, Any] | None = None
+    for hour in document["hours"]:
+        moment = _utc(hour)
+        if moment < after or moment > until:
+            continue
+        level = hour["by_work_type"][work_type]["level"]
+        if level is None:
+            continue
+        if worst is None or bands_rank(level) > bands_rank(worst):
+            worst, first = level, hour
+    return worst, first
+
+
+def bands_rank(level: str) -> int:
+    """Where a level sits from least to most restrictive."""
+    return LEVELS.index(level)
+
+
+def alert_message(
+    document: dict[str, Any], work_type: str, level: str, hour: dict[str, Any]
+) -> str:
+    """Short, and it leads with the hour, because that is the part to act on."""
+    advice = hour["by_work_type"][work_type]
+    return "\n".join(
+        [
+            f"Heat warning for {WORK_NAMES.get(work_type, work_type).lower()}",
+            "",
+            f"{hour['local_time']}: {document['levels'][level]}",
+            document["swahili"]["levels"][level],
+            "",
+            f"WBGT {hour['wbgt_c']} °C. Used to the heat: "
+            f"{_spell(advice['work_minutes_acclimatized'])}",
+            "",
+            document["advice"]["water"],
+            "",
+            "Send /today for the whole day, or /stop to stop these.",
+        ]
+    )
+
+
+def morning_message(document: dict[str, Any], work_type: str, date: str, now: datetime) -> str:
+    """The day ahead, sent before work starts."""
+    return "\n".join(
+        [
+            "Good morning. Today's heat for your work:",
+            "",
+            day_message(document, date, work_type, after=now),
+            "",
+            "/stop to stop these messages.",
+        ]
+    )

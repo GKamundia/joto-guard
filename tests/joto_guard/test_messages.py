@@ -107,3 +107,68 @@ def test_a_cool_day_says_no_limit_is_reached(config_path):
 def test_day_message_outside_the_forecast_is_refused(document):
     with pytest.raises(messages.NoGuidance):
         messages.day_message(document, "2026-10-01", "heavy")
+
+
+def test_the_levels_here_match_the_ones_the_bands_module_uses():
+    """The alert compares levels by rank, so the two orders must not drift apart."""
+    assert messages.LEVELS == bands.LEVELS
+
+
+def test_the_worst_level_in_the_next_day_is_found(document):
+    level, hour = messages.worst_ahead(
+        document, "heavy", datetime(2026, 9, 20, 3, tzinfo=UTC), hours_ahead=24
+    )
+
+    assert level == "work_rest"
+    assert hour["local_time"].startswith("2026-09-20")
+
+
+def test_a_shorter_window_can_miss_the_worst_of_the_day(document):
+    early, _ = messages.worst_ahead(
+        document, "heavy", datetime(2026, 9, 20, 3, tzinfo=UTC), hours_ahead=3
+    )
+    whole_day, _ = messages.worst_ahead(
+        document, "heavy", datetime(2026, 9, 20, 3, tzinfo=UTC), hours_ahead=24
+    )
+
+    assert messages.bands_rank(early) < messages.bands_rank(whole_day)
+
+
+def test_light_work_never_reaches_the_alert_threshold_on_this_day(document):
+    level, _ = messages.worst_ahead(
+        document, "light", datetime(2026, 9, 20, 3, tzinfo=UTC), hours_ahead=24
+    )
+
+    assert messages.bands_rank(level) < messages.bands_rank(messages.ALERT_FROM)
+
+
+def test_nothing_is_found_past_the_end_of_the_forecast(document):
+    level, hour = messages.worst_ahead(
+        document, "heavy", datetime(2026, 9, 25, tzinfo=UTC), hours_ahead=24
+    )
+
+    assert level is None and hour is None
+
+
+def test_the_alert_leads_with_the_hour_and_says_how_to_stop(document):
+    level, hour = messages.worst_ahead(
+        document, "heavy", datetime(2026, 9, 20, 3, tzinfo=UTC), hours_ahead=24
+    )
+
+    text = messages.alert_message(document, "heavy", level, hour)
+
+    assert text.startswith("Heat warning for heavy work")
+    assert hour["local_time"] in text
+    assert "Work in spells with rest in the shade." in text
+    assert "Fanya kazi kwa vipindi" in text
+    assert "/stop" in text
+
+
+def test_the_morning_message_carries_the_day_and_how_to_stop(document):
+    text = messages.morning_message(
+        document, "heavy", "2026-09-20", datetime(2026, 9, 20, 3, tzinfo=UTC)
+    )
+
+    assert text.startswith("Good morning")
+    assert "Highest" in text
+    assert "/stop" in text

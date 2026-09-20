@@ -8,10 +8,24 @@
 | `/now` | the current hour: WBGT, what the level means, and the minutes of work it allows |
 | `/today` | the rest of today: the peak, the window needing breaks, and every hour above normal |
 | `/tomorrow` | the same for tomorrow |
+| `/subscribe` | be told without asking: a morning message and a warning when it turns bad |
+| `/stop` | stop those messages |
 
 Add a work type to any command, for example `/today light`. Without one the bot answers for
 heavy work, which covers the quarrying, construction and farming the evidence points to
 around Juja (`docs/PROBLEM_EVIDENCE.md`).
+
+## Sending without being asked
+
+A lookup tool waits to be opened; a warning has to arrive. Two jobs do that:
+
+- **06:30 East Africa Time**, every day: the day ahead for each subscriber's type of work.
+- **Every six hours**: if the next 24 hours contain an hour that needs work and rest spells
+  or worse, a short warning naming the hour. At most one a day per subscriber, unless the
+  forecast worsens, which is worth saying again.
+
+Subscriptions live in `data/subscriptions.json`, one line per chat, and nothing else. There
+is no database for the same reason the rest of the project has none.
 
 The bot holds no heat logic. It reads `GET /v1/heat-guidance` from the API and hands the
 document to `joto_guard.messages`, whose wording is tested in `tests/joto_guard/test_messages.py`.

@@ -2,6 +2,9 @@
 .env
 *.env.local
 
+# Who subscribed to the bot: chat ids, not ours to publish
+data/subscriptions.json
+
 # Python
 __pycache__/
 *.py[cod]

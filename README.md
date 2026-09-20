@@ -89,7 +89,10 @@ The dashboard has five tabs, each linkable (`#guidance`, `#forecast`, `#station`
 **Method**: how a reading becomes advice, step by step, what the service cannot tell you, and the sources.
 
 Throughout:
-- **A Telegram bot**: `/now`, `/today`, `/tomorrow`, with an optional work type.
+- **A Telegram bot** that answers `/now`, `/today` and `/tomorrow`, and, once someone sends
+  `/subscribe`, **sends without being asked**: the day ahead each morning at 06:30, and a
+  warning when the next 24 hours contain work that has to stop or slow down. At most one
+  warning a day unless the forecast worsens.
 - **An open API** with interactive documentation and every quality-controlled table downloadable as CSV.
 - **Light and dark**, and a layout that works on a phone, which is what a supervisor checks at dawn.
 - **One command to run all of it**: `docker compose up --build`.
@@ -103,7 +106,7 @@ Throughout:
 | API | FastAPI, Uvicorn |
 | Web | React 19, Vite, Leaflet. Charts are hand-drawn SVG with pointer tracking, so there is no chart library to pull in |
 | Bot | python-telegram-bot, httpx |
-| Tests and lint | pytest (326 tests), ruff, GitHub Actions |
+| Tests and lint | pytest (352 tests), ruff, GitHub Actions |
 | Packaging | Docker, Docker Compose; Render for the API, Vercel for the page |
 | External data | Open-Meteo (ECMWF IFS forecast, ERA5 archive) |
 
@@ -231,7 +234,10 @@ Run the Telegram bot against that API (see [`bot/README.md`](bot/README.md)):
 set -a && . ./.env && set +a && python bot/joto_bot.py
 ```
 
-`/now`, `/today` and `/tomorrow` answer for heavy work; add a work type to any of them, for example `/today light`.
+`/now`, `/today` and `/tomorrow` answer for heavy work; add a work type to any of them, for
+example `/today light`. `/subscribe` turns on the morning message and the warnings, `/stop`
+turns them off. Subscribers are kept in `data/subscriptions.json`, which is git-ignored:
+chat ids are not ours to publish.
 
 Tests and lint:
 
@@ -331,6 +337,8 @@ We would rather state these than have a judge find them.
 - **No study has measured heat stress in Juja itself.** The evidence for who works outdoors there is the county's own development plan and local quarrying studies; the worker-heat evidence comes from Mombasa, Tana River and Siaya. [`docs/PROBLEM_EVIDENCE.md`](docs/PROBLEM_EVIDENCE.md) section 7 lists every gap.
 - **We have not yet run it on another station.** The pipeline needs only the same variables, but each station needs its own light calibration and forecast correction, and we have no downloads for the sister stations.
 - **The Kiswahili has not been checked by a professional translator.**
+- **It reaches only people on Telegram.** The bot now warns without being asked, but most Kenyan outdoor workers are not on Telegram. SMS through the Africa's Talking sandbox, and USSD after it, are the next thing to build and are not built.
+- **The warnings have not been tested with a real subscriber over a hot spell.** The jobs are tested against a fixed clock and a stand-in for Telegram; nobody has yet received one in the field.
 - **This is planning guidance, not medical advice.** It does not replace an employer's duty to watch workers for heat illness.
 
 ## Reproducibility
@@ -363,4 +371,4 @@ python -m joto_guard verify --past-forecasts data/reference/open_meteo_ecmwf_ifs
 pytest && ruff check src tests bot && ruff format --check src tests bot
 ```
 
-326 tests, run on Python 3.11 and 3.13 in GitHub Actions on every push. They use fixtures cut from the real exports and never touch the network.
+352 tests, run on Python 3.11 and 3.13 in GitHub Actions on every push. They use fixtures cut from the real exports and never touch the network.
