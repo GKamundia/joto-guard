@@ -1,17 +1,108 @@
+/* ---- Tokens --------------------------------------------------------------- */
+
 :root {
-  --ink: #16211f;
-  --muted: #5b6b68;
-  --line: #d9e2e0;
-  --paper: #ffffff;
   --page: #f4f7f6;
+  --paper: #ffffff;
+  --sunken: #eef3f1;
+  --ink: #0f201d;
+  --ink-soft: #3d524e;
+  --muted: #62746f;
+  --line: #dce5e2;
+  --line-soft: #e8efed;
+  --brand: #0c5b53;
+  --brand-ink: #ffffff;
   --accent: #0f6d63;
-  --good: #2e7d32;
-  --suspect: #b26a00;
-  --bad: #c62828;
-  --absent: #9aa7a4;
+  --accent-soft: #e0f0ed;
+  --good: #1d7a45;
+  --good-soft: #e2f3e8;
+  --suspect: #92610a;
+  --suspect-soft: #fbeeda;
+  --bad: #b0332b;
+  --bad-soft: #fae5e3;
   --danger: #7f1d1d;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --danger-soft: #f5dedd;
+  --absent: #a5b2af;
+  --on-level: #ffffff;
+
+  --r-sm: 8px;
+  --r: 12px;
+  --r-lg: 18px;
+  --r-pill: 999px;
+
+  --shadow-1: 0 1px 2px rgb(16 32 29 / 6%), 0 1px 3px rgb(16 32 29 / 4%);
+  --shadow-2: 0 2px 4px rgb(16 32 29 / 6%), 0 12px 24px -12px rgb(16 32 29 / 18%);
+
+  --shell: 74rem;
+
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  font-size: 16px;
   color: var(--ink);
+  color-scheme: light;
+}
+
+/* Two blocks, one palette: the media query follows the device, the attribute follows the
+   button in the header. The attribute wins, so an explicit choice survives a system change. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0a1211;
+    --paper: #121d1b;
+    --sunken: #182523;
+    --ink: #e8efed;
+    --ink-soft: #c3d0cd;
+    --muted: #90a39e;
+    --line: #26352f;
+    --line-soft: #1d2b28;
+    --brand: #0b2b28;
+    --brand-ink: #e8efed;
+    --accent: #4fbfab;
+    --accent-soft: #13302c;
+    --good: #48b26e;
+    --good-soft: #112c1e;
+    --suspect: #d7a03e;
+    --suspect-soft: #31250f;
+    --bad: #e0675e;
+    --bad-soft: #331a18;
+    --danger: #c2564f;
+    --danger-soft: #2c1615;
+    --absent: #55625e;
+    --on-level: #08211d;
+
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
+    --shadow-2: 0 2px 4px rgb(0 0 0 / 35%), 0 14px 28px -14px rgb(0 0 0 / 60%);
+
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --page: #0a1211;
+  --paper: #121d1b;
+  --sunken: #182523;
+  --ink: #e8efed;
+  --ink-soft: #c3d0cd;
+  --muted: #90a39e;
+  --line: #26352f;
+  --line-soft: #1d2b28;
+  --brand: #0b2b28;
+  --brand-ink: #e8efed;
+  --accent: #4fbfab;
+  --accent-soft: #13302c;
+  --good: #48b26e;
+  --good-soft: #112c1e;
+  --suspect: #d7a03e;
+  --suspect-soft: #31250f;
+  --bad: #e0675e;
+  --bad-soft: #331a18;
+  --danger: #c2564f;
+  --danger-soft: #2c1615;
+  --absent: #55625e;
+  --on-level: #08211d;
+
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-2: 0 2px 4px rgb(0 0 0 / 35%), 0 14px 28px -14px rgb(0 0 0 / 60%);
+
+  color-scheme: dark;
 }
 
 * {
@@ -21,73 +112,312 @@
 body {
   margin: 0;
   background: var(--page);
-  line-height: 1.5;
+  color: var(--ink);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ---- Shell ---------------------------------------------------------------- */
+
+.page-inner {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
 header.page {
-  background: var(--accent);
-  color: #fff;
-  padding: 1.25rem 1rem;
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+
+/* Only the tabs follow the reader down: the masthead scrolls away so a phone keeps the
+   answer on screen. */
+.tabs-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--brand);
+  color: var(--brand-ink);
+  box-shadow: var(--shadow-1);
+}
+
+.masthead-side {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.masthead {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.brand-mark {
+  flex: none;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 14%);
+  display: grid;
+  place-items: center;
+}
+
+.brand-mark svg {
+  width: 1.2rem;
+  height: 1.2rem;
+  display: block;
 }
 
 header.page h1 {
-  margin: 0 0 0.25rem;
-  font-size: 1.3rem;
+  margin: 0;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
 }
 
-header.page p {
+header.page h1 span {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  opacity: 0.78;
+}
+
+.masthead-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
   margin: 0;
-  opacity: 0.9;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
+}
+
+.masthead-facts > div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--r-pill);
+  background: rgb(255 255 255 / 12%);
+  white-space: nowrap;
+}
+
+.masthead-facts dt {
+  opacity: 0.75;
+}
+
+.masthead-facts dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.theme-toggle {
+  font: inherit;
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid rgb(255 255 255 / 22%);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  background: rgb(255 255 255 / 12%);
+}
+
+.theme-toggle svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+/* The tab row scrolls sideways rather than wrapping: a second row of tabs pushes the
+   answer off a phone screen. */
+.tabs {
+  display: flex;
+  gap: 0.15rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tabs button {
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  flex: none;
+  padding: 0.55rem 0.9rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--brand-ink);
+  opacity: 0.72;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 120ms ease, border-color 120ms ease;
+}
+
+.tabs button:hover {
+  opacity: 1;
+}
+
+.tabs button.selected {
+  opacity: 1;
+  font-weight: 650;
+  border-bottom-color: currentcolor;
 }
 
 main {
-  max-width: 62rem;
+  max-width: var(--shell);
   margin: 0 auto;
-  padding: 1rem;
+  padding: 1.25rem 1rem 2rem;
   display: grid;
   gap: 1rem;
 }
 
+footer.page {
+  border-top: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--muted);
+  font-size: 0.78rem;
+  padding: 1.1rem 0;
+}
+
+/* ---- Cards ---------------------------------------------------------------- */
+
 section.card {
   background: var(--paper);
   border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 1rem;
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+  padding: 1.25rem;
   /* Grid items size to their content by default, which lets a wide table push the
      card past the screen instead of scrolling inside it. */
   min-width: 0;
 }
 
 section.card h2 {
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.2rem;
   font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+section.card h3 {
+  margin: 1.25rem 0 0.4rem;
+  font-size: 0.9rem;
+}
+
+section.card h3:first-child {
+  margin-top: 0;
 }
 
 section.card p.lead {
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.9rem;
   color: var(--muted);
   font-size: 0.85rem;
+  max-width: 62ch;
 }
+
+section.card p.lead:last-child {
+  margin-bottom: 0;
+}
+
+/* The closing note under a card: sourcing, caveats, how to read the figure above. */
+section.card p.note {
+  margin: 0.9rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  max-width: 62ch;
+}
+
+ul.tight {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+h2.part {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 0.6rem 0 -0.35rem;
+}
+
+/* ---- Facts ---------------------------------------------------------------- */
 
 dl.facts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-  gap: 0.6rem 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: 0.75rem 1rem;
   margin: 0;
 }
 
 dl.facts dt {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   color: var(--muted);
 }
 
 dl.facts dd {
-  margin: 0;
+  margin: 0.1rem 0 0;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
+
+/* ---- Tables --------------------------------------------------------------- */
 
 table {
   width: 100%;
@@ -98,60 +428,96 @@ table {
 th,
 td {
   text-align: left;
-  padding: 0.35rem 0.5rem;
-  border-bottom: 1px solid var(--line);
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--line-soft);
   vertical-align: top;
 }
 
-th {
-  font-size: 0.75rem;
+thead th {
+  position: sticky;
+  top: 0;
+  background: var(--paper);
+  font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   color: var(--muted);
   font-weight: 600;
+  border-bottom-color: var(--line);
 }
 
-td.number {
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+tbody tr:hover td {
+  background: var(--sunken);
+}
+
+td.number,
+th.number {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
+td.best {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+td.filename {
+  word-break: break-all;
+}
+
 .scroll {
-  overflow-x: auto;
+  overflow: auto;
   min-width: 0;
   max-width: 100%;
+  max-height: 28rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r);
 }
+
+/* ---- Pills and legends ---------------------------------------------------- */
 
 .pill {
   display: inline-block;
-  padding: 0.05rem 0.45rem;
-  border-radius: 999px;
-  font-size: 0.7rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--r-pill);
+  font-size: 0.72rem;
   font-weight: 600;
-  color: #fff;
   white-space: nowrap;
+  background: var(--sunken);
+  color: var(--muted);
 }
 
 .pill.good {
-  background: var(--good);
+  background: var(--good-soft);
+  color: var(--good);
 }
 .pill.suspect {
-  background: var(--suspect);
+  background: var(--suspect-soft);
+  color: var(--suspect);
 }
 .pill.bad {
-  background: var(--bad);
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+.pill.danger {
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 .pill.quiet {
-  background: var(--muted);
+  background: var(--sunken);
+  color: var(--muted);
 }
 
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.5rem 1rem;
   font-size: 0.75rem;
   color: var(--muted);
-  margin-top: 0.6rem;
+  margin-top: 0.75rem;
 }
 
 .legend span::before {
@@ -159,8 +525,8 @@ td.number {
   display: inline-block;
   width: 0.7rem;
   height: 0.7rem;
-  border-radius: 2px;
-  margin-right: 0.3rem;
+  border-radius: 3px;
+  margin-right: 0.35rem;
   vertical-align: -1px;
   background: var(--absent);
 }
@@ -175,23 +541,33 @@ td.number {
   background: var(--bad);
 }
 
+/* ---- Sensor matrix -------------------------------------------------------- */
+
 .matrix {
   display: grid;
-  gap: 2px;
+  justify-content: start;
+  gap: 3px;
   font-size: 0.7rem;
+  padding: 0.75rem;
 }
 
 .matrix .head {
   color: var(--muted);
   font-size: 0.68rem;
-  padding-right: 0.4rem;
+  padding-right: 0.5rem;
   white-space: nowrap;
+  align-self: center;
+}
+
+.matrix .head.col {
+  text-align: center;
+  padding-right: 0;
 }
 
 .matrix .cell {
-  height: 1.35rem;
-  min-width: 1.1rem;
-  border-radius: 2px;
+  height: 1.5rem;
+  min-width: 1.2rem;
+  border-radius: 4px;
   background: var(--good);
 }
 
@@ -203,40 +579,58 @@ td.number {
 }
 .matrix .cell.absent {
   background: var(--absent);
-  opacity: 0.35;
+  opacity: 0.3;
 }
+
+/* ---- Coverage days -------------------------------------------------------- */
 
 .days {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(4.6rem, 1fr));
-  gap: 0.4rem;
+  grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
+  gap: 0.5rem;
 }
 
 .day {
   border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 0.35rem 0.4rem;
+  border-radius: var(--r);
+  padding: 0.5rem 0.55rem;
   font-size: 0.72rem;
+  color: var(--muted);
+  background: var(--paper);
 }
 
 .day strong {
   display: block;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-soft);
   font-variant-numeric: tabular-nums;
 }
 
 .day .score {
+  display: block;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.15rem;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
 }
+
+/* ---- Bar chart ------------------------------------------------------------ */
 
 .chart {
   width: 100%;
-  height: 170px;
+  height: auto;
+  display: block;
 }
 
 .chart .bar {
   fill: var(--accent);
+  rx: 2;
+}
+
+.chart .bar.below {
+  fill: var(--bad);
 }
 
 .chart .grid {
@@ -249,123 +643,376 @@ td.number {
   fill: var(--muted);
 }
 
+/* ---- Map ------------------------------------------------------------------ */
+
 #map {
-  height: 260px;
-  border-radius: 8px;
+  height: 280px;
+  border-radius: var(--r);
+  border: 1px solid var(--line);
   z-index: 0;
 }
 
+/* OpenStreetMap only publishes light tiles; inverting them keeps the card from glaring
+   out of a dark page. The marker and attribution sit above the filtered pane. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .leaflet-tile-pane {
+    filter: invert(1) hue-rotate(180deg) brightness(0.92) saturate(0.7);
+  }
+}
+
+:root[data-theme="dark"] .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) saturate(0.7);
+}
+
+/* ---- Findings ------------------------------------------------------------- */
+
 .finding {
-  border-left: 3px solid var(--suspect);
-  padding: 0.1rem 0 0.1rem 0.7rem;
-  margin-bottom: 0.9rem;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--suspect);
+  border-radius: var(--r);
+  padding: 0.7rem 0.85rem;
+  margin-bottom: 0.65rem;
+  background: var(--paper);
+}
+
+.finding:last-child {
+  margin-bottom: 0;
 }
 
 .finding h3 {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
 }
 
 .finding p {
-  margin: 0.2rem 0 0.3rem;
+  margin: 0.25rem 0 0.45rem;
   font-size: 0.86rem;
+  color: var(--ink-soft);
 }
+
+.finding .source {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+/* ---- Notices -------------------------------------------------------------- */
 
 .notice {
   max-width: 40rem;
-  margin: 3rem auto;
-  padding: 1rem;
+  margin: 4rem auto;
+  padding: 1.5rem;
   background: var(--paper);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+}
+
+.notice h1 {
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
 }
 
 .notice code {
   display: block;
-  margin-top: 0.5rem;
-  padding: 0.5rem;
-  background: var(--page);
-  border-radius: 6px;
-  font-size: 0.8rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--sunken);
+  border-radius: var(--r);
+  font-size: 0.78rem;
+  line-height: 1.7;
   overflow-x: auto;
 }
 
-a {
-  color: var(--accent);
+/* Cards standing in for content that has not arrived: shape first, numbers later. */
+.skeleton {
+  display: grid;
+  gap: 0.6rem;
 }
 
-footer.page {
-  max-width: 62rem;
-  margin: 0 auto;
-  padding: 0 1rem 2rem;
-  color: var(--muted);
-  font-size: 0.78rem;
+.skeleton span {
+  display: block;
+  height: 0.85rem;
+  border-radius: var(--r-sm);
+  background: var(--sunken);
+  animation: pulse 1.4s ease-in-out infinite;
 }
 
-@media (min-width: 40rem) {
-  header.page h1 {
-    font-size: 1.6rem;
+.skeleton span.tall {
+  height: 3.5rem;
+}
+
+.skeleton span.half {
+  width: 55%;
+}
+
+.skeleton span.third {
+  width: 32%;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.45;
   }
-  main {
-    padding: 1.5rem 1rem;
-  }
 }
 
-h2.part {
-  font-size: 1.05rem;
-  color: var(--muted);
-  margin: 0.75rem 0 0;
-}
+/* ---- Segmented controls --------------------------------------------------- */
 
 .worktypes {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.9rem;
 }
 
 .worktypes button {
   font: inherit;
-  font-size: 0.8rem;
-  padding: 0.35rem 0.75rem;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.85rem;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--paper);
-  color: var(--ink);
+  color: var(--ink-soft);
   cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.worktypes button:hover {
+  border-color: var(--accent);
 }
 
 .worktypes button small {
   display: block;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   opacity: 0.7;
 }
 
 .worktypes button.selected {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-level);
+  font-weight: 600;
 }
+
+.switches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.9rem;
+}
+
+.switches button {
+  font: inherit;
+  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.8rem 0.35rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.switches button::before {
+  content: "";
+  width: 0.8rem;
+  height: 0.8rem;
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--paper);
+}
+
+.switches button[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.switches button[aria-pressed="true"]::before {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+button.link {
+  font: inherit;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+/* ---- Right now ------------------------------------------------------------ */
+
+.card.now {
+  border-top: 4px solid var(--good);
+  background: linear-gradient(var(--good-soft), transparent 9rem), var(--paper);
+}
+
+.card.now.level-acclimatized_only {
+  border-top-color: var(--suspect);
+  background: linear-gradient(var(--suspect-soft), transparent 9rem), var(--paper);
+}
+.card.now.level-work_rest {
+  border-top-color: var(--bad);
+  background: linear-gradient(var(--bad-soft), transparent 9rem), var(--paper);
+}
+.card.now.level-reschedule {
+  border-top-color: var(--danger);
+  background: linear-gradient(var(--danger-soft), transparent 9rem), var(--paper);
+}
+
+.now-grid {
+  display: grid;
+  grid-template-columns: minmax(15rem, 1fr) minmax(18rem, 1.25fr);
+  gap: 1.25rem 2rem;
+  align-items: start;
+}
+
+.now-when {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+.now-level {
+  margin: 0.15rem 0 0.1rem;
+  font-size: 2.3rem;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.card.now .now-level {
+  color: var(--good);
+}
+.card.now.level-acclimatized_only .now-level {
+  color: var(--suspect);
+}
+.card.now.level-work_rest .now-level {
+  color: var(--bad);
+}
+.card.now.level-reschedule .now-level {
+  color: var(--danger);
+}
+
+.now-reading {
+  margin: 0.35rem 0 0.6rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.now-reading strong {
+  font-size: 1.5rem;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.now-sentence {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  max-width: 44ch;
+}
+
+.now-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.now-facts > div {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 0.55rem 0.65rem;
+  background: var(--paper);
+}
+
+.now-facts dt {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.now-facts dd {
+  margin: 0.15rem 0 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+}
+
+.now-facts dd small {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--muted);
+  letter-spacing: 0;
+}
+
+.now-next {
+  margin: 1rem 0 0;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--r);
+  background: var(--sunken);
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+}
+
+/* ---- Days ahead ----------------------------------------------------------- */
 
 .guidance-days {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
-  gap: 0.5rem;
-  margin-bottom: 0.8rem;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1rem;
 }
 
 .guidance-day {
+  font: inherit;
   display: grid;
-  gap: 0.15rem;
+  gap: 0.2rem;
+  text-align: left;
   border: 1px solid var(--line);
   border-left: 4px solid var(--good);
-  border-radius: 6px;
-  padding: 0.45rem 0.6rem;
+  border-radius: var(--r);
+  padding: 0.6rem 0.75rem;
   font-size: 0.78rem;
+  background: var(--paper);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: box-shadow 120ms ease, transform 120ms ease;
+}
+
+.guidance-day:hover {
+  box-shadow: var(--shadow-1);
+}
+
+.guidance-day strong {
+  font-size: 0.85rem;
+  color: var(--ink);
 }
 
 .guidance-day .peak {
   font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.guidance-day .peak small {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--muted);
 }
 
 .guidance-day.level-acclimatized_only {
@@ -378,25 +1025,66 @@ h2.part {
   border-left-color: var(--danger);
 }
 
+.guidance-day.selected {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+/* ---- Hour strip ----------------------------------------------------------- */
+
+.hour-block {
+  margin-bottom: 0.9rem;
+}
+
+.hour-day {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
 .hours {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(2.2rem, 1fr));
-  gap: 2px;
+  grid-template-columns: repeat(auto-fill, minmax(2.6rem, 1fr));
+  gap: 3px;
+}
+
+/* Wide enough for all 24 columns: put every hour in its own one, so a column holds the
+   same hour on every day and a part-day starts where it belongs. */
+@media (min-width: 62rem) {
+  .hours {
+    grid-template-columns: repeat(24, minmax(0, 1fr));
+  }
+
+  .hour {
+    grid-column-start: calc(var(--hour-of-day) + 1);
+  }
 }
 
 .hour {
-  border-radius: 3px;
-  padding: 0.2rem 0;
+  font: inherit;
+  border: 0;
+  border-radius: var(--r-sm);
+  padding: 0.3rem 0.1rem;
   text-align: center;
-  font-size: 0.66rem;
-  line-height: 1.2;
-  color: #fff;
+  font-size: 0.68rem;
+  line-height: 1.25;
+  color: var(--on-level);
   background: var(--good);
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+.hour:hover {
+  transform: translateY(-1px);
 }
 
 .hour strong {
   display: block;
-  font-size: 0.8rem;
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .hour.level-acclimatized_only {
@@ -411,9 +1099,21 @@ h2.part {
 .hour.level-unknown {
   background: var(--absent);
 }
+
+/* The dashed edge says the hour could still land in the next level up; it has to read
+   against four different fills, so it is an outline rather than a colour. */
 .hour.might-rise {
-  outline: 2px dashed var(--ink);
-  outline-offset: -3px;
+  outline: 2px dashed currentcolor;
+  outline-offset: -4px;
+}
+
+.hour.now {
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--ink);
+}
+
+.hour.selected {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
 }
 
 .legend span.level-normal::before {
@@ -430,22 +1130,89 @@ h2.part {
 }
 .legend span.might-rise::before {
   background: transparent;
-  outline: 2px dashed var(--ink);
+  outline: 2px dashed var(--muted);
   outline-offset: -2px;
 }
 
-.chart .bar.below {
-  fill: var(--bad);
+.hour-detail {
+  margin-top: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--good);
+  border-radius: var(--r);
+  background: var(--sunken);
 }
 
+.hour-detail.level-acclimatized_only {
+  border-left-color: var(--suspect);
+}
+.hour-detail.level-work_rest {
+  border-left-color: var(--bad);
+}
+.hour-detail.level-reschedule {
+  border-left-color: var(--danger);
+}
+
+.hour-detail h3 {
+  margin: 0 0 0.6rem;
+  font-size: 0.95rem;
+}
+
+.hour-detail dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.6rem;
+  margin: 0 0 0.7rem;
+}
+
+.hour-detail dt {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.hour-detail dd {
+  margin: 0.1rem 0 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.hour-detail dd small {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.hour-detail p {
+  margin: 0 0 0.25rem;
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+}
+
+.hour-detail .might {
+  color: var(--suspect);
+}
+
+/* ---- Advice --------------------------------------------------------------- */
+
 ul.advice {
-  margin: 0.8rem 0 0;
-  padding-left: 1.1rem;
-  font-size: 0.85rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.5rem;
 }
 
 ul.advice li {
-  margin-bottom: 0.45rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+ul.advice li strong {
+  color: var(--ink);
 }
 
 /* Kiswahili beside the English, quieter but the same size: it is a translation, not a footnote. */
@@ -454,150 +1221,7 @@ ul.advice li {
   color: var(--muted);
 }
 
-/* ---- Dashboard shell ------------------------------------------------------ */
-
-.page-inner {
-  max-width: 62rem;
-  margin: 0 auto;
-}
-
-.masthead {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.masthead-facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 1.25rem;
-  margin: 0;
-  font-size: 0.78rem;
-}
-
-.masthead-facts dt {
-  opacity: 0.75;
-}
-
-.masthead-facts dd {
-  margin: 0;
-  font-weight: 700;
-}
-
-.tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-  margin-top: 1rem;
-}
-
-.tabs button {
-  font: inherit;
-  font-size: 0.85rem;
-  padding: 0.4rem 0.8rem;
-  border: 0;
-  border-radius: 6px 6px 0 0;
-  background: rgba(255, 255, 255, 0.14);
-  color: #fff;
-  cursor: pointer;
-}
-
-.tabs button:hover {
-  background: rgba(255, 255, 255, 0.24);
-}
-
-.tabs button.selected {
-  background: var(--page);
-  color: var(--accent);
-  font-weight: 700;
-}
-
-footer.page {
-  background: var(--paper);
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 0.78rem;
-  padding: 1rem;
-  margin-top: 1rem;
-}
-
-/* ---- Right now ------------------------------------------------------------ */
-
-.card.now {
-  border-left: 5px solid var(--good);
-}
-.card.now.level-acclimatized_only {
-  border-left-color: var(--suspect);
-}
-.card.now.level-work_rest {
-  border-left-color: var(--bad);
-}
-.card.now.level-reschedule {
-  border-left-color: var(--danger);
-}
-
-.now-grid {
-  display: grid;
-  grid-template-columns: minmax(14rem, 1.1fr) minmax(16rem, 1.4fr);
-  gap: 1rem;
-  align-items: start;
-}
-
-.now-when {
-  margin: 0;
-  font-size: 0.78rem;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.now-level {
-  margin: 0.1rem 0 0.3rem;
-  font-size: 1.9rem;
-  font-weight: 700;
-  line-height: 1.1;
-}
-
-.now-sentence {
-  margin: 0;
-  font-size: 0.88rem;
-}
-
-.now-facts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
-  gap: 0.6rem;
-  margin: 0;
-}
-
-.now-facts dt {
-  font-size: 0.72rem;
-  color: var(--muted);
-}
-
-.now-facts dd {
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 700;
-}
-
-.now-facts dd small {
-  display: block;
-  font-size: 0.7rem;
-  font-weight: 400;
-  color: var(--muted);
-}
-
-.now-next {
-  margin: 0.9rem 0 0;
-  padding-top: 0.7rem;
-  border-top: 1px solid var(--line);
-  font-size: 0.85rem;
-}
-
-/* ---- Charts --------------------------------------------------------------- */
+/* ---- Time series ---------------------------------------------------------- */
 
 .tseries svg {
   width: 100%;
@@ -666,7 +1290,7 @@ footer.page {
 }
 
 .tseries-read {
-  margin: 0.3rem 0 0;
+  margin: 0.4rem 0 0;
   font-size: 0.82rem;
   min-height: 1.4em;
   color: var(--muted);
@@ -685,7 +1309,7 @@ footer.page {
   align-items: center;
   font-size: 0.75rem;
   color: var(--muted);
-  margin-top: 0.5rem;
+  margin-top: 0.6rem;
 }
 
 .series-legend .key {
@@ -711,106 +1335,18 @@ footer.page {
   border-radius: 3px;
 }
 
-/* ---- Interaction ---------------------------------------------------------- */
-
-.guidance-day,
-.hour {
-  font: inherit;
-  font-size: 0.78rem;
-  text-align: left;
-  cursor: pointer;
-  background: var(--paper);
-  color: inherit;
-}
-
-.hour {
-  text-align: center;
-  font-size: 0.66rem;
-  color: #fff;
-  border: 0;
-}
-
-.guidance-day.selected {
-  outline: 2px solid var(--accent);
-}
-
-.hour.selected {
-  outline: 2px solid var(--ink);
-  outline-offset: 1px;
-}
-
-button.link {
-  font: inherit;
-  border: 0;
-  background: none;
-  padding: 0;
-  color: var(--accent);
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.hour-detail {
-  margin-top: 0.8rem;
-  padding: 0.8rem;
-  border: 1px solid var(--line);
-  border-left: 4px solid var(--good);
-  border-radius: 8px;
-  background: var(--page);
-}
-
-.hour-detail.level-acclimatized_only {
-  border-left-color: var(--suspect);
-}
-.hour-detail.level-work_rest {
-  border-left-color: var(--bad);
-}
-.hour-detail.level-reschedule {
-  border-left-color: var(--danger);
-}
-
-.hour-detail h3 {
-  margin: 0 0 0.5rem;
-  font-size: 0.95rem;
-}
-
-.hour-detail dl {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
-  gap: 0.5rem;
-  margin: 0 0 0.6rem;
-}
-
-.hour-detail dt {
-  font-size: 0.72rem;
-  color: var(--muted);
-}
-
-.hour-detail dd {
-  margin: 0;
-  font-weight: 700;
-}
-
-.hour-detail dd small {
-  font-weight: 400;
-  color: var(--muted);
-}
-
-.hour-detail p {
-  margin: 0 0 0.2rem;
-  font-size: 0.85rem;
-}
-
-.hour-detail .might {
-  color: var(--suspect);
-}
-
 /* ---- Method --------------------------------------------------------------- */
 
 ol.steps {
   margin: 0;
-  padding-left: 1.2rem;
+  padding-left: 1.3rem;
   display: grid;
-  gap: 0.7rem;
+  gap: 0.9rem;
+}
+
+ol.steps li::marker {
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
 ol.steps h3 {
@@ -819,66 +1355,57 @@ ol.steps h3 {
 }
 
 ol.steps p {
-  margin: 0.15rem 0 0;
-  font-size: 0.85rem;
+  margin: 0.2rem 0 0;
+  font-size: 0.86rem;
+  color: var(--ink-soft);
 }
 
 ol.steps p.uses {
   color: var(--muted);
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
 }
 
 p.formula {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.78rem;
-  background: var(--page);
+  background: var(--sunken);
   border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 0.5rem 0.6rem;
+  border-radius: var(--r);
+  padding: 0.6rem 0.7rem;
 }
 
-td.best {
-  font-weight: 700;
-  color: var(--accent);
-}
+/* ---- Small screens -------------------------------------------------------- */
 
-@media (max-width: 40rem) {
+@media (max-width: 48rem) {
   .now-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
+
   .now-level {
-    font-size: 1.5rem;
-  }
-  .tabs button {
-    font-size: 0.78rem;
-    padding: 0.35rem 0.6rem;
-  }
-}
-
-/* Dark mode: the same palette, inverted. Outdoor supervisors check this at dawn. */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ink: #e7efed;
-    --muted: #94a6a2;
-    --line: #2b3a37;
-    --paper: #131c1b;
-    --page: #0c1413;
-    --accent: #4db6a4;
-    --good: #2f7d4f;
-    --suspect: #b07a1e;
-    --bad: #c0453f;
-    --absent: #5d6b68;
-    --danger: #8c2f2c;
+    font-size: 1.9rem;
   }
 
-  header.page {
-    background: #0d3b36;
+  .masthead {
+    gap: 0.5rem;
   }
 
-  .tabs button.selected {
-    background: var(--page);
-    color: var(--ink);
+  .masthead-facts {
+    font-size: 0.7rem;
+  }
+
+  section.card {
+    padding: 1rem;
+    border-radius: var(--r);
+  }
+
+  main {
+    padding: 0.9rem 0.75rem 1.5rem;
+  }
+
+  .page-inner {
+    padding: 0 0.75rem;
   }
 }

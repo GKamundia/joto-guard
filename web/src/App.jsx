@@ -15,6 +15,7 @@ import Recommendations from "./components/Recommendations";
 import StationCard from "./components/StationCard";
 import StationMap from "./components/StationMap";
 import StationRecord from "./components/StationRecord";
+import { shortDay } from "./format";
 
 const TABS = [
   ["guidance", "Guidance"],
@@ -23,6 +24,8 @@ const TABS = [
   ["health", "Station health"],
   ["method", "Method"],
 ];
+
+const THEME_KEY = "joto-theme";
 
 /** One fetch per endpoint, kept together so every tab reads the same load.
  *
@@ -57,13 +60,99 @@ function useJotoData() {
   return { ...data, failed, error };
 }
 
+/** Storage is unavailable in some private-browsing modes; the page still has to render. */
+function remember(key, value) {
+  try {
+    if (value === null) window.localStorage.removeItem(key);
+    else window.localStorage.setItem(key, value);
+  } catch {
+    // The choice then lasts for this visit only.
+  }
+}
+
+function storedTheme() {
+  try {
+    return window.localStorage.getItem(THEME_KEY) ?? "system";
+  } catch {
+    return "system";
+  }
+}
+
+function prefersDark() {
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
+}
+
+function useTheme() {
+  const [theme, setTheme] = useState(storedTheme);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "system") {
+      delete root.dataset.theme;
+      remember(THEME_KEY, null);
+    } else {
+      root.dataset.theme = theme;
+      remember(THEME_KEY, theme);
+    }
+  }, [theme]);
+
+  const dark = theme === "dark" || (theme === "system" && prefersDark());
+  return [dark, () => setTheme(dark ? "light" : "dark")];
+}
+
 function tabFromHash() {
   const asked = window.location.hash.slice(1);
   return TABS.some(([key]) => key === asked) ? asked : "guidance";
 }
 
+function ThemeButton({ dark, onToggle }) {
+  return (
+    <button
+      type="button"
+      className="theme-toggle"
+      onClick={onToggle}
+      title={dark ? "Switch to the light theme" : "Switch to the dark theme"}
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        {dark ? (
+          <>
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" />
+          </>
+        ) : (
+          <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z" />
+        )}
+      </svg>
+      {dark ? "Light" : "Dark"}
+    </button>
+  );
+}
+
+function LoadingPage() {
+  return (
+    <main aria-busy="true">
+      <p className="sr-only">Loading Joto Guard</p>
+      <section className="card">
+        <div className="skeleton">
+          <span className="third" />
+          <span className="tall" />
+          <span className="half" />
+        </div>
+      </section>
+      <section className="card">
+        <div className="skeleton">
+          <span className="half" />
+          <span />
+          <span className="tall" />
+        </div>
+      </section>
+    </main>
+  );
+}
+
 export default function App() {
   const { guidance, report, wbgt, forecast, failed, error } = useJotoData();
+  const [dark, toggleTheme] = useTheme();
   const [tab, setTab] = useState(() => tabFromHash());
   const [workType, setWorkType] = useState("heavy");
 
@@ -81,7 +170,7 @@ export default function App() {
   if (error) {
     return (
       <div className="notice">
-        <h1 style={{ fontSize: "1.1rem" }}>Joto Guard is not available</h1>
+        <h1>Joto Guard is not available</h1>
         <p>{error}</p>
         <code>
           docker compose up --build
@@ -97,53 +186,74 @@ export default function App() {
   }
 
   if (!guidance || !report) {
-    return <p className="notice">Loading Joto Guard…</p>;
+    return <LoadingPage />;
   }
 
   const station = report.station;
+  const score = report.health.daily.at(-1)?.score;
 
   return (
     <>
       <header className="page">
         <div className="page-inner">
           <div className="masthead">
-            <div>
-              <h1>Joto Guard</h1>
-              <p>When outdoor work around JKUAT, Juja gets too hot, and how far the station can be trusted.</p>
+            <div className="brand">
+              <span className="brand-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="9" r="4" />
+                  <path d="M12 1v2M4.9 4.9l1.4 1.4M1 9h2M21 9h2M19.1 4.9l-1.4 1.4M3 17h7M14 17h7M6 21h5M15 21h3" />
+                </svg>
+              </span>
+              <h1>
+                Joto Guard
+                <span>
+                  When outdoor work around JKUAT, Juja gets too hot, and how far the station can be
+                  trusted.
+                </span>
+              </h1>
             </div>
-            <dl className="masthead-facts">
-              <div>
-                <dt>Station</dt>
-                <dd>Conduit@Empathy1 · CHORDS 61</dd>
-              </div>
-              <div>
-                <dt>Record</dt>
-                <dd>
-                  {station.record_start_utc.slice(0, 10)} to {station.record_end_utc.slice(0, 10)}
-                </dd>
-              </div>
-              <div>
-                <dt>Health</dt>
-                <dd>{report.health.daily.at(-1)?.score ?? "-"} / 100</dd>
-              </div>
-            </dl>
-          </div>
 
-          <nav className="tabs" aria-label="Sections">
+            <div className="masthead-side">
+              <dl className="masthead-facts">
+                <div>
+                  <dt>Station</dt>
+                  <dd>Conduit@Empathy1 · CHORDS 61</dd>
+                </div>
+                <div>
+                  <dt>Record</dt>
+                  <dd>
+                    {shortDay(station.record_start_utc)} – {shortDay(station.record_end_utc)}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Health</dt>
+                  <dd>{score ?? "-"} / 100</dd>
+                </div>
+              </dl>
+              <ThemeButton dark={dark} onToggle={toggleTheme} />
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <nav className="tabs-bar" aria-label="Sections">
+        <div className="page-inner">
+          <div className="tabs" role="tablist">
             {TABS.map(([key, name]) => (
               <button
                 key={key}
                 type="button"
+                role="tab"
+                aria-selected={key === tab}
                 className={key === tab ? "selected" : ""}
-                aria-current={key === tab ? "page" : undefined}
                 onClick={() => setTab(key)}
               >
                 {name}
               </button>
             ))}
-          </nav>
+          </div>
         </div>
-      </header>
+      </nav>
 
       <main>
         {tab === "guidance" ? (

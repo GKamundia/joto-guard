@@ -1,3 +1,20 @@
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
 export const isMissing = (value) => value === null || value === undefined || value === "";
 
 export const number = (value, digits = 1) =>
@@ -16,3 +33,21 @@ export const measure = (value) => {
 export const dayOfMonth = (date) => (isMissing(date) ? "" : date.slice(8));
 
 export const monthDay = (date) => (isMissing(date) ? "-" : date.slice(5));
+
+/** "28 Aug" from the date part as written, so a reader's own zone cannot shift the day. */
+export const shortDay = (date) => {
+  if (isMissing(date)) return "-";
+  const [, month, day] = date.slice(0, 10).split("-");
+  return `${Number(day)} ${MONTHS[Number(month) - 1] ?? month}`;
+};
+
+/** "Sat 19 Sep". Guidance dates are already local to the station. */
+export const dayLabel = (date) => {
+  if (isMissing(date)) return "-";
+  const [year, month, day] = date.slice(0, 10).split("-").map(Number);
+  const weekday = WEEKDAYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
+  return `${weekday} ${day} ${MONTHS[month - 1]}`;
+};
+
+/** The hour a local timestamp falls in, as "14:00". */
+export const hourOfDay = (localTime) => (isMissing(localTime) ? "-" : localTime.slice(11, 16));
