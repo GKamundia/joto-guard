@@ -32,7 +32,7 @@ export default function Downloads() {
           </tbody>
         </table>
       </div>
-      <p className="lead" style={{ marginTop: "0.8rem", marginBottom: 0 }}>
+      <p className="note">
         <a href={apiDocsUrl}>API documentation</a>
       </p>
     </section>

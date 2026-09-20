@@ -70,15 +70,9 @@ export default function ForecastPanel({ forecast, failure, guidance, workType })
           work type chosen on the Guidance tab.
         </p>
 
-        <div className="worktypes" role="group" aria-label="Series">
-          <button
-            type="button"
-            className={showRaw ? "selected" : ""}
-            onClick={() => setShowRaw((on) => !on)}
-            aria-pressed={showRaw}
-          >
-            Raw forecast
-            <small>{showRaw ? "shown" : "hidden"}</small>
+        <div className="switches">
+          <button type="button" onClick={() => setShowRaw((on) => !on)} aria-pressed={showRaw}>
+            Show the raw forecast
           </button>
         </div>
 
@@ -111,40 +105,42 @@ export default function ForecastPanel({ forecast, failure, guidance, workType })
           correction had seen. "The station's usual value" is the fairest baseline: what you would
           guess from the station's own average for that hour of day, with no forecast at all.
         </p>
-        <table className="grid">
-          <thead>
-            <tr>
-              <th>Hours</th>
-              <th>Raw forecast</th>
-              <th>Corrected</th>
-              <th>The station's usual value</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              ["All hours", skill.all],
-              ["Midday (10:00–15:59)", skill.midday],
-            ].map(([name, row]) => (
-              <tr key={name}>
-                <th scope="row">{name}</th>
-                <td>{number(row.raw.mae_c, 2)} °C</td>
-                <td className="best">{number(row.corrected.mae_c, 2)} °C</td>
-                <td>{number(row.station_usual.mae_c, 2)} °C</td>
+        <div className="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Hours</th>
+                <th>Raw forecast</th>
+                <th>Corrected</th>
+                <th>The station's usual value</th>
               </tr>
-            ))}
-            {Object.entries(skill.by_lead_day).map(([lead, row]) => (
-              <tr key={lead}>
-                <th scope="row">
-                  {lead === "0" ? "Same day" : `${lead} day${lead === "1" ? "" : "s"} ahead`}
-                </th>
-                <td>{number(row.raw.mae_c, 2)} °C</td>
-                <td className="best">{number(row.corrected.mae_c, 2)} °C</td>
-                <td>{number(row.station_usual.mae_c, 2)} °C</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <p className="lead" style={{ marginTop: "0.7rem", marginBottom: 0 }}>
+            </thead>
+            <tbody>
+              {[
+                ["All hours", skill.all],
+                ["Midday (10:00–15:59)", skill.midday],
+              ].map(([name, row]) => (
+                <tr key={name}>
+                  <th scope="row">{name}</th>
+                  <td>{number(row.raw.mae_c, 2)} °C</td>
+                  <td className="best">{number(row.corrected.mae_c, 2)} °C</td>
+                  <td>{number(row.station_usual.mae_c, 2)} °C</td>
+                </tr>
+              ))}
+              {Object.entries(skill.by_lead_day).map(([lead, row]) => (
+                <tr key={lead}>
+                  <th scope="row">
+                    {lead === "0" ? "Same day" : `${lead} day${lead === "1" ? "" : "s"} ahead`}
+                  </th>
+                  <td>{number(row.raw.mae_c, 2)} °C</td>
+                  <td className="best">{number(row.corrected.mae_c, 2)} °C</td>
+                  <td>{number(row.station_usual.mae_c, 2)} °C</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="note">
           Mean absolute error, lower is better. The correction beats both the raw forecast and the
           baseline at every lead day. Its band held the station on{" "}
           <strong>{number(skill.band_held_station_pct, 1)} %</strong> of hours, a little short of

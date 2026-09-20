@@ -33,7 +33,7 @@ export default function StationCard({ station, generatedAt, version }) {
         <Fact label="Repeated timestamps removed">{count(station.duplicates_removed)}</Fact>
       </dl>
 
-      <h3 style={{ fontSize: "0.9rem", margin: "1rem 0 0.3rem" }}>Files read</h3>
+      <h3>Files read</h3>
       <div className="scroll">
         <table>
           <thead>
@@ -47,7 +47,7 @@ export default function StationCard({ station, generatedAt, version }) {
           <tbody>
             {station.source_files.map((file) => (
               <tr key={file.name}>
-                <td style={{ wordBreak: "break-all" }}>{file.name}</td>
+                <td className="filename">{file.name}</td>
                 <td className="number">{count(file.rows)}</td>
                 <td>
                   {stamp(file.first_utc)} to {stamp(file.last_utc)}
@@ -68,7 +68,7 @@ export default function StationCard({ station, generatedAt, version }) {
         </table>
       </div>
 
-      <p className="lead" style={{ marginTop: "0.9rem", marginBottom: 0 }}>
+      <p className="note">
         Data attributed to {station.attribution}. Served through the CHORDS platform (
         <a href={station.chords_doi}>software DOI</a>, not a DOI for this data). Report built by
         Conduit Sentinel {version} at {stamp(generatedAt)}.

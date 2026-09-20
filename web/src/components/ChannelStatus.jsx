@@ -5,7 +5,7 @@ export default function ChannelStatus({ rows, rules }) {
   const days = [...new Set(rows.map((row) => row.date_utc))];
   const groups = [...new Set(rows.map((row) => row.group))];
   const byCell = new Map(rows.map((row) => [`${row.group}|${row.date_utc}`, row]));
-  const columns = `minmax(6.5rem, auto) repeat(${days.length}, minmax(0, 1fr))`;
+  const columns = `max-content repeat(${days.length}, 2.4rem)`;
 
   const explain = (cell) =>
     cell.rules.length
@@ -25,7 +25,7 @@ export default function ChannelStatus({ rows, rules }) {
         <div className="matrix" style={{ gridTemplateColumns: columns }}>
           <div />
           {days.map((day) => (
-            <div className="head" key={day} style={{ textAlign: "center" }}>
+            <div className="head col" key={day}>
               {dayOfMonth(day)}
             </div>
           ))}

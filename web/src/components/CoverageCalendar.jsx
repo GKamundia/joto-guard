@@ -21,8 +21,8 @@ export default function CoverageCalendar({ coverage }) {
         ))}
       </div>
 
-      <h3 style={{ fontSize: "0.9rem", margin: "1rem 0 0.3rem" }}>Periods the exports cover</h3>
-      <ul style={{ margin: 0, paddingLeft: "1.1rem", fontSize: "0.85rem" }}>
+      <h3>Periods the exports cover</h3>
+      <ul className="tight">
         {windows.map((window) => (
           <li key={window.start_utc}>
             {stamp(window.start_utc)} to {stamp(window.end_utc)}
@@ -30,12 +30,12 @@ export default function CoverageCalendar({ coverage }) {
         ))}
       </ul>
 
-      <h3 style={{ fontSize: "0.9rem", margin: "1rem 0 0.3rem" }}>
+      <h3>
         Interruptions ({coverage.reporting_gaps} in reporting, {coverage.gaps_between_exports}{" "}
         between exports, {coverage.late_intervals} late reports)
       </h3>
       {gaps.length === 0 ? (
-        <p className="lead" style={{ marginBottom: 0 }}>
+        <p className="note">
           No interval longer than {coverage.gap_threshold_s} s.
         </p>
       ) : (

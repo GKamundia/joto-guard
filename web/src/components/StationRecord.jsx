@@ -85,7 +85,7 @@ export default function StationRecord({ wbgt, failure }) {
             <span className="key compare" /> the station's own column
           </p>
         ) : null}
-        <p className="lead" style={{ marginTop: "0.6rem", marginBottom: 0 }}>
+        <p className="note">
           Method: {wbgt.method}.
         </p>
       </section>
@@ -123,7 +123,7 @@ export default function StationRecord({ wbgt, failure }) {
             ))}
           </tbody>
         </table>
-        <p className="lead" style={{ marginTop: "0.7rem", marginBottom: 0 }}>
+        <p className="note">
           This is the weakest link in the chain and we would rather say so. The station sees its own
           cloud while ERA5 averages a 25 km cell, which is most of the gap: under a clear reference
           sky the error halves. Still, an error of that size moves WBGT by about ±1.2 °C at midday,

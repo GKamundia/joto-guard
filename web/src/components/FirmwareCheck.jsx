@@ -44,7 +44,7 @@ export default function FirmwareCheck({ wbgt }) {
           );
         })}
       </svg>
-      <p className="lead" style={{ marginTop: "0.6rem", marginBottom: 0 }}>
+      <p className="note">
         Bars show how far the firmware's value sits below the model at each local hour, averaged
         over {wbgt.firmware_by_local_hour[0]?.n_hours ?? 0} days.
       </p>

@@ -24,7 +24,7 @@ export default function Recommendations({ items }) {
             <span className={`pill ${LEVEL_STYLE[item.evidence_level] ?? "quiet"}`}>
               {item.evidence_level}
             </span>{" "}
-            <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+            <span className="source">
               from {item.rules.join(", ")}
             </span>
           </div>

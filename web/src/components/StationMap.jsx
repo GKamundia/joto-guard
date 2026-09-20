@@ -14,10 +14,12 @@ export default function StationMap({ station }) {
       attribution: "© OpenStreetMap contributors",
     }).addTo(map);
     // A circle marker avoids Leaflet's bundled icon images, which bundlers mangle.
+    const accent =
+      getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#0f6d63";
     L.circleMarker([station.latitude, station.longitude], {
       radius: 9,
-      color: "#0f6d63",
-      fillColor: "#0f6d63",
+      color: accent,
+      fillColor: accent,
       fillOpacity: 0.7,
     })
       .addTo(map)

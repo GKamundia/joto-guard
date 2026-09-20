@@ -8,7 +8,7 @@ export default function Observations({ rain, light, codes, calibration }) {
     <section className="card">
       <h2>Rain, light and device codes</h2>
 
-      <h3 style={{ fontSize: "0.9rem", margin: "0.6rem 0 0.3rem" }}>Rain gauges</h3>
+      <h3>Rain gauges</h3>
       {rainDays.length === 0 ? (
         <p className="lead">
           Neither gauge recorded rain over this record, so they cannot be compared.
@@ -47,7 +47,7 @@ export default function Observations({ rain, light, codes, calibration }) {
         </div>
       )}
 
-      <h3 style={{ fontSize: "0.9rem", margin: "1rem 0 0.3rem" }}>Light sensor</h3>
+      <h3>Light sensor</h3>
       <p className="lead">{light.note}</p>
       <dl className="facts">
         {Object.entries(light.night_counts).map(([channel, values]) => (
@@ -81,7 +81,7 @@ export default function Observations({ rain, light, codes, calibration }) {
         </div>
       </dl>
 
-      <h3 style={{ fontSize: "0.9rem", margin: "1rem 0 0.3rem" }}>Device health codes</h3>
+      <h3>Device health codes</h3>
       <p className="lead">
         {count(codes.rows_with_code_zero)} rows reported code 0. The station's other codes are not
         documented, so they are recorded without being judged.

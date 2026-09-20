@@ -56,7 +56,7 @@ export default function Audits({ audits, thermometers }) {
         </table>
       </div>
 
-      <h3 style={{ fontSize: "0.9rem", margin: "1rem 0 0.3rem" }}>
+      <h3>
         Thermometers against each other
       </h3>
       <p className="lead">
