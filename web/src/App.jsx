@@ -238,13 +238,12 @@ export default function App() {
 
       <nav className="tabs-bar" aria-label="Sections">
         <div className="page-inner">
-          <div className="tabs" role="tablist">
+          <div className="tabs">
             {TABS.map(([key, name]) => (
               <button
                 key={key}
                 type="button"
-                role="tab"
-                aria-selected={key === tab}
+                aria-current={key === tab ? "page" : undefined}
                 className={key === tab ? "selected" : ""}
                 onClick={() => setTab(key)}
               >
