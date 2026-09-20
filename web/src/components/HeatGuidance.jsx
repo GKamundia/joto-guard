@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { number } from "../format";
+import { dayLabel, number } from "../format";
+import { currentHour } from "./NowCard";
 
 const WORK_NAMES = {
   light: "Light work",
@@ -15,6 +16,13 @@ const LEVEL_NAMES = {
   reschedule: "Reschedule",
 };
 
+const LEVEL_PILL = {
+  normal: "good",
+  acclimatized_only: "suspect",
+  work_rest: "bad",
+  reschedule: "danger",
+};
+
 const ADVICE_ORDER = [
   ["water", "Water."],
   ["new_workers", "New workers."],
@@ -22,6 +30,18 @@ const ADVICE_ORDER = [
 ];
 
 const MIN_HOURS_PER_DAY = 12;
+
+/** Consecutive hours split into the local days they belong to, in the order given. */
+function byDay(hours) {
+  const days = [];
+  for (const hour of hours) {
+    const date = hour.local_time.slice(0, 10);
+    const last = days.at(-1);
+    if (last && last.date === date) last.hours.push(hour);
+    else days.push({ date, hours: [hour] });
+  }
+  return days;
+}
 
 function DaySummary({ day, workType, swahili, selected, onSelect }) {
   const summary = day.by_work_type[workType];
@@ -43,9 +63,14 @@ function DaySummary({ day, workType, swahili, selected, onSelect }) {
       aria-pressed={selected}
       onClick={() => onSelect(selected ? null : day.date)}
     >
-      <strong>{day.date}</strong>
+      <strong>{dayLabel(day.date)}</strong>
       <span className="peak">
-        up to {number(summary.peak_wbgt_c)} °C at {summary.peak_time}
+        {number(summary.peak_wbgt_c)} °C <small>peak at {summary.peak_time}</small>
+      </span>
+      <span>
+        <span className={`pill ${LEVEL_PILL[summary.worst_level] ?? "quiet"}`}>
+          {LEVEL_NAMES[summary.worst_level] ?? summary.worst_level}
+        </span>
       </span>
       <span>{advice}</span>
       <span className="sw" lang="sw">
@@ -127,6 +152,7 @@ export default function HeatGuidance({ guidance, workType, onWorkType, error }) 
     return Date.parse(hour.hour_utc) + 3600 * 1000 > now;
   });
   const shown = picked && hours.some((hour) => hour.hour_utc === picked.hour_utc) ? picked : null;
+  const here = currentHour(guidance.hours, now);
 
   return (
     <section className="card">
@@ -139,6 +165,7 @@ export default function HeatGuidance({ guidance, workType, onWorkType, error }) 
         , judged against NIOSH's heat limits for the type of work.
       </p>
 
+      <h3>Type of work</h3>
       <div className="worktypes" role="group" aria-label="Type of work">
         {Object.keys(guidance.work_types).map((name) => (
           <button
@@ -159,6 +186,7 @@ export default function HeatGuidance({ guidance, workType, onWorkType, error }) 
         {number(work.limit_new_workers_c)} °C.
       </p>
 
+      <h3>The days ahead</h3>
       <div className="guidance-days">
         {guidance.days.map((item) => (
           <DaySummary
@@ -171,40 +199,53 @@ export default function HeatGuidance({ guidance, workType, onWorkType, error }) 
           />
         ))}
       </div>
-      <p className="lead">
+
+      <h3>
+        {day ? dayLabel(day) : "The hours ahead"}
         {day ? (
           <>
-            Showing {day}. <button type="button" className="link" onClick={() => setDay(null)}>
-              Show the hours ahead instead
+            {" · "}
+            <button type="button" className="link" onClick={() => setDay(null)}>
+              show the hours ahead instead
             </button>
           </>
         ) : (
-          <>Showing the hours ahead. Choose a day above to see all of it.</>
+          <> · choose a day above to see all of it</>
         )}
-      </p>
+      </h3>
 
-      <div className="hours" aria-label="Hourly levels">
-        {hours.map((hour) => {
-          const advice = hour.by_work_type[workType];
-          const mightRise = advice.level_if_high && advice.level_if_high !== advice.level;
-          const isShown = shown?.hour_utc === hour.hour_utc;
-          return (
-            <button
-              key={hour.hour_utc}
-              type="button"
-              className={`hour level-${advice.level ?? "unknown"}${mightRise ? " might-rise" : ""}${
-                isShown ? " selected" : ""
-              }`}
-              aria-pressed={isShown}
-              onClick={() => setPicked(isShown ? null : hour)}
-              title={`${hour.local_time}: ${number(hour.wbgt_c)} °C`}
-            >
-              <span>{hour.local_time.slice(11, 13)}</span>
-              <strong>{number(hour.wbgt_c, 0)}</strong>
-            </button>
-          );
-        })}
-      </div>
+      {byDay(hours).map((group) => (
+        <div className="hour-block" key={group.date}>
+          {day ? null : <h4 className="hour-day">{dayLabel(group.date)}</h4>}
+          <div className="hours" aria-label={`Hourly levels for ${group.date}`}>
+            {group.hours.map((hour) => {
+              const advice = hour.by_work_type[workType];
+              const mightRise = advice.level_if_high && advice.level_if_high !== advice.level;
+              const isShown = shown?.hour_utc === hour.hour_utc;
+              const isNow = here?.hour_utc === hour.hour_utc;
+              return (
+                <button
+                  key={hour.hour_utc}
+                  type="button"
+                  className={`hour level-${advice.level ?? "unknown"}${mightRise ? " might-rise" : ""}${
+                    isNow ? " now" : ""
+                  }${isShown ? " selected" : ""}`}
+                  aria-pressed={isShown}
+                  style={{ "--hour-of-day": Number(hour.local_time.slice(11, 13)) }}
+                  onClick={() => setPicked(isShown ? null : hour)}
+                  title={`${hour.local_time}: ${number(hour.wbgt_c)} °C, ${
+                    LEVEL_NAMES[advice.level] ?? "unknown"
+                  }`}
+                >
+                  <span>{hour.local_time.slice(11, 13)}</span>
+                  <strong>{number(hour.wbgt_c, 0)}</strong>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
       <div className="legend">
         {Object.entries(LEVEL_NAMES).map(([level, name]) => (
           <span key={level} className={`level-${level}`}>
@@ -216,6 +257,7 @@ export default function HeatGuidance({ guidance, workType, onWorkType, error }) 
 
       {shown ? <HourDetail hour={shown} workType={workType} guidance={guidance} /> : null}
 
+      <h3>Whatever the level</h3>
       <ul className="advice">
         {ADVICE_ORDER.map(([key, label]) => (
           <li key={key}>
@@ -226,7 +268,7 @@ export default function HeatGuidance({ guidance, workType, onWorkType, error }) 
           </li>
         ))}
       </ul>
-      <p className="lead" style={{ marginTop: "0.6rem", marginBottom: 0 }}>
+      <p className="note">
         Local hours, WBGT in °C. Choose an hour for its detail. Limits from NIOSH (2016), example
         tasks from the 2024 Compendium of Physical Activities.
       </p>
