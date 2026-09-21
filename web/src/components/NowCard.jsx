@@ -124,8 +124,10 @@ export default function NowCard({ guidance, workType, now = Date.now() }) {
         {spell ? (
           <>
             Next care needed: <strong>{hourOfDay(spell.from.local_time)}</strong> to{" "}
-            <strong>{hourOfDay(spell.until.local_time)}</strong> on{" "}
-            {dayLabel(spell.until.local_time)}, {spell.hours} hour
+            <strong>
+              {spell.endsAt ? hourOfDay(spell.endsAt.local_time) : "the end of the forecast"}
+            </strong>{" "}
+            on {dayLabel(spell.from.local_time)}, {spell.hours} hour
             {spell.hours === 1 ? "" : "s"} at{" "}
             {LEVEL_NAMES[spell.from.by_work_type[workType].level].toLowerCase()} or worse.
           </>

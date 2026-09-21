@@ -30,7 +30,15 @@ export function nextSpell(hours, workType, from = Date.now()) {
   ) {
     end += 1;
   }
-  return { from: ahead[start], until: ahead[end], hours: end - start + 1 };
+  // `until` is the last hour in the spell; `endsAt` is the hour after it, which is when the
+  // spell is over. Saying "11:00 to 17:00" and "until 17:00" means the same six hours, where
+  // "to 16:00" beside "until 17:00" reads as a contradiction.
+  return {
+    from: ahead[start],
+    until: ahead[end],
+    endsAt: ahead[end + 1] ?? null,
+    hours: end - start + 1,
+  };
 }
 
 /** The hours still to come, in order. Empty once the forecast no longer reaches now. */
