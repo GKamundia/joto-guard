@@ -49,7 +49,7 @@ function DaySummary({ day, workType, swahili, past, selected, onSelect }) {
 
   let advice = "No limit reached.";
   if (summary.limited_from) {
-    advice = `Acclimatized workers need breaks from ${summary.limited_from} to ${summary.limited_until}.`;
+    advice = `Everyone needs breaks from ${summary.limited_from} to ${summary.limited_until}.`;
   } else if (summary.hours_acclimatized_only > 0) {
     advice = `New workers need breaks for ${summary.hours_acclimatized_only} hour${
       summary.hours_acclimatized_only === 1 ? "" : "s"
