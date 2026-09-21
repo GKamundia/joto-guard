@@ -1,0 +1,103 @@
+{
+  "n_hours": 1244,
+  "n_days": 15,
+  "error_c": {
+    "mae": 1.07,
+    "rmse": 1.54,
+    "bias": 0.0,
+    "p90_abs": 2.5,
+    "worst_abs": 6.83
+  },
+  "mae_by_local_hour_c": {
+    "0": 0.56,
+    "1": 0.67,
+    "2": 0.67,
+    "3": 0.88,
+    "4": 0.96,
+    "5": 0.95,
+    "6": 0.86,
+    "7": 1.11,
+    "8": 2.2,
+    "9": 1.97,
+    "10": 2.03,
+    "11": 1.5,
+    "12": 1.78,
+    "13": 1.69,
+    "14": 1.06,
+    "15": 1.64,
+    "16": 1.45,
+    "17": 0.79,
+    "18": 0.5,
+    "19": 0.44,
+    "20": 0.45,
+    "21": 0.5,
+    "22": 0.56,
+    "23": 0.55
+  },
+  "levels": {
+    "light": {
+      "n_hours": 1244,
+      "exact_pct": 94.8,
+      "under_warned_pct": 4.6,
+      "over_warned_pct": 0.6,
+      "worst_under_warning_levels": 1
+    },
+    "moderate": {
+      "n_hours": 1244,
+      "exact_pct": 89.2,
+      "under_warned_pct": 7.9,
+      "over_warned_pct": 2.9,
+      "worst_under_warning_levels": 2
+    },
+    "heavy": {
+      "n_hours": 1244,
+      "exact_pct": 86.3,
+      "under_warned_pct": 7.3,
+      "over_warned_pct": 6.4,
+      "worst_under_warning_levels": 1
+    },
+    "very_heavy": {
+      "n_hours": 1244,
+      "exact_pct": 84.4,
+      "under_warned_pct": 8.4,
+      "over_warned_pct": 7.2,
+      "worst_under_warning_levels": 2
+    }
+  },
+  "levels_from_band_top": {
+    "light": {
+      "n_hours": 1244,
+      "exact_pct": 89.2,
+      "under_warned_pct": 0.6,
+      "over_warned_pct": 10.2,
+      "worst_under_warning_levels": 1
+    },
+    "moderate": {
+      "n_hours": 1244,
+      "exact_pct": 80.1,
+      "under_warned_pct": 0.6,
+      "over_warned_pct": 19.4,
+      "worst_under_warning_levels": 1
+    },
+    "heavy": {
+      "n_hours": 1244,
+      "exact_pct": 79.5,
+      "under_warned_pct": 0.2,
+      "over_warned_pct": 20.3,
+      "worst_under_warning_levels": 1
+    },
+    "very_heavy": {
+      "n_hours": 1244,
+      "exact_pct": 78.1,
+      "under_warned_pct": 0.2,
+      "over_warned_pct": 21.6,
+      "worst_under_warning_levels": 1
+    }
+  },
+  "hours_near_a_limit_pct": {
+    "light": 0.0,
+    "moderate": 6.8,
+    "heavy": 10.0,
+    "very_heavy": 12.2
+  }
+}

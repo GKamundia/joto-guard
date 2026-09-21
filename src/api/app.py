@@ -80,6 +80,14 @@ def create_app(
     guidance_file = CachedFile(store.directory / "heat_guidance.json", read_json, JOTO_ADVICE)
     wbgt_file = CachedFile(store.directory / "wbgt_hourly.csv", pd.read_csv, JOTO_ADVICE)
     forecast_file = CachedFile(store.directory / "wbgt_forecast.csv", pd.read_csv, JOTO_ADVICE)
+    verification_file = CachedFile(
+        configs / "forecast_verification.json",
+        read_json,
+        "Run 'python -m joto_guard verify --past-forecasts <file>'.",
+    )
+    season_file = CachedFile(
+        configs / "hot_season.json", read_json, "Run 'python -m joto_guard hot-season'."
+    )
     correction_file = CachedFile(
         configs / "forecast_correction.json",
         read_json,
@@ -130,6 +138,7 @@ def create_app(
                 "/v1/history?var=t_sht_c",
                 "/v1/wbgt?days=7",
                 "/v1/forecast",
+                "/v1/hot-season",
                 "/v1/heat-guidance",
                 "/v1/dataset/{name}",
             ],
@@ -280,8 +289,21 @@ def create_app(
                     },
                     "held_out": correction["held_out"],
                 },
+                # Whether the level it implies was the right one, not only how many degrees
+                # out it was. Optional: the forecast serves without it.
+                "verification": _optional(verification_file),
             }
         )
+
+    @app.get(
+        "/v1/hot-season",
+        summary="How often each limit is crossed in every month, not just the weeks on record",
+        description="ERA5 since 2016 at the station's grid cell, run through the same WBGT "
+        "model and corrected towards the station. `at_least` is raw ERA5, which reads cool; "
+        "`likely` is corrected. Working hours only.",
+    )
+    def hot_season() -> dict[str, Any]:
+        return cached(season_file)
 
     @app.get(
         "/v1/heat-guidance",
@@ -320,6 +342,14 @@ def _origins_from_environment() -> Sequence[str]:
     if not setting:
         return DEFAULT_ORIGINS
     return tuple(origin.strip() for origin in setting.split(",") if origin.strip())
+
+
+def _optional(file: CachedFile) -> Any:
+    """A file the response is better with and can do without."""
+    try:
+        return file.read()
+    except OutputsMissing:
+        return None
 
 
 def _as_utc(moment: datetime) -> pd.Timestamp:

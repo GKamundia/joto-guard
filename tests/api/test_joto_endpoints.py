@@ -143,3 +143,35 @@ def test_index_lists_the_new_endpoints(processed, configs):
     assert "/v1/heat-guidance" in endpoints
     assert "/v1/wbgt?days=7" in endpoints
     assert "/v1/forecast" in endpoints
+
+
+def test_the_forecast_carries_its_level_check_when_one_exists(processed, configs):
+    (configs / "forecast_verification.json").write_text(
+        json.dumps({"n_hours": 10, "levels": {"heavy": {"under_warned_pct": 7.3}}})
+    )
+
+    body = client_for(processed, configs).get("/v1/forecast").json()
+
+    assert body["verification"]["levels"]["heavy"]["under_warned_pct"] == 7.3
+
+
+def test_the_forecast_still_serves_without_a_level_check(processed, configs):
+    body = client_for(processed, configs).get("/v1/forecast").json()
+
+    assert body["verification"] is None
+    assert body["hours"]
+
+
+def test_the_hot_season_is_served_as_written(processed, configs):
+    (configs / "hot_season.json").write_text(json.dumps({"hot_months": ["Jan", "Feb", "Mar"]}))
+
+    body = client_for(processed, configs).get("/v1/hot-season").json()
+
+    assert body["hot_months"] == ["Jan", "Feb", "Mar"]
+
+
+def test_a_missing_hot_season_says_what_to_run(processed, configs):
+    response = client_for(processed, configs).get("/v1/hot-season")
+
+    assert response.status_code == 503
+    assert "hot-season" in response.json()["detail"]

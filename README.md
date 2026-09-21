@@ -20,7 +20,9 @@ Kenya Met's heat advisories give temperatures for whole counties with general ad
 
 The station itself reports a wet bulb globe temperature (WBGT), the index occupational heat limits are written in. But its firmware value behaves as if the sun were not shining: at midday it reads about 6 °C below a standards-based estimate from the same sensors, so it could not be used to warn anyone.
 
-The evidence, its sources and its limits (we found no published heat study for Juja itself, and our station record covers only three cool-season weeks) are in [`docs/PROBLEM_EVIDENCE.md`](docs/PROBLEM_EVIDENCE.md).
+**And Juja is hotter than its station record suggests.** The record is three cool-season weeks, which on their own would make Juja look like a mild place to work. Running the same WBGT model on every working hour since 2016 (ERA5 reanalysis, corrected towards the station) shows otherwise. For heavy work from January to March, **43 % of working hours need breaks even for workers used to the heat**, and 80 % are over the limit for new workers. In August and September, the months the station covers, the first figure is 17 %. The hot season is where this matters, and the station could not see it.
+
+The evidence, its sources and its limits (we found no published heat study for Juja itself) are in [`docs/PROBLEM_EVIDENCE.md`](docs/PROBLEM_EVIDENCE.md). The whole-year reconstruction is `python -m joto_guard hot-season`, method in [decision 0013](docs/decisions/0013-the-whole-year.md).
 
 ## 3. Solution
 
@@ -70,6 +72,8 @@ The dashboard has five tabs, each linkable (`#guidance`, `#forecast`, `#station`
 - **Right now**: the current hour's level, its WBGT with the band, and the minutes of work the hour allows for workers used to the heat and for new workers, with the next spell needing care.
 - **Heat guidance for the next three days**, hour by hour, for light, moderate, heavy and very heavy work. Choose a day to see all of it, choose an hour for its detail.
 - **English and Kiswahili** for every level and every piece of advice.
+- **The whole year, not just the weeks on record**: how often each limit is crossed in every month since 2016, as a likely figure and a floor, beside the station's own cool-season record.
+- **Whether the forecast gets the level right**, not only how many degrees out it is: how often it said an hour was safer than it turned out, shown on the Forecast tab.
 - **An uncertainty band** on every forecast hour, and a "could reach the next level" marker when the upper band crosses into a stricter level.
 
 **Forecast**, the three days in full.
@@ -106,7 +110,7 @@ Throughout:
 | API | FastAPI, Uvicorn |
 | Web | React 19, Vite, Leaflet. Charts are hand-drawn SVG with pointer tracking, so there is no chart library to pull in |
 | Bot | python-telegram-bot, httpx |
-| Tests and lint | pytest (352 tests), ruff, GitHub Actions |
+| Tests and lint | pytest (365 tests), ruff, GitHub Actions |
 | Packaging | Docker, Docker Compose; Render for the API, Vercel for the page |
 | External data | Open-Meteo (ECMWF IFS forecast, ERA5 archive) |
 
@@ -324,7 +328,7 @@ MIT. See `LICENSE`.
 
 We would rather state these than have a judge find them.
 
-- **The record is 19 days of cool season, not a year.** The exports cover 28 Aug to 15 Sep 2026 with a six-day hole (5–10 Sep), and air temperature never passed 28.5 °C. January to March, Kenya's hot season, is not in the data at all. Every number here describes a cool-season fortnight.
+- **The station record is 19 days of cool season, not a year.** The exports cover 28 Aug to 15 Sep 2026 with a six-day hole (5–10 Sep), and air temperature never passed 28.5 °C. The rest of the year comes from ERA5 reanalysis corrected towards the station. That correction was measured in the cool season, and applying it to the hot one is an assumption; the page shows the uncorrected floor beside it for that reason.
 - **The nowcast is missing, because the data is not live.** A new CHORDS portal account starts as a guest; downloading needs permissions a portal administrator grants, and ours had not been granted by 19 Sep 2026. The service therefore runs on the organisers' exports and forecasts forward, rather than reporting the current hour.
 - **WBGT is available for 312 of the record's 456 hours.** The rest lack a quality-controlled input, mostly inside the six-day gap. We leave those hours empty rather than filling them.
 - **The light calibration is the weakest link in the chain.** Held out day by day it reaches R² 0.67 across daylight but only 0.30 with the sun above 30°, RMSE 155 W/m². Much of that is the station seeing its own cloud while ERA5 averages a 25 km cell; under a clear reference sky the error halves and R² is 0.91. Still, ±155 W/m² moves WBGT by about ±1.2 °C at midday, and NIOSH's limits are only 1.5 to 3 °C apart, so a level near a boundary can be wrong. [Decision 0007](docs/decisions/0007-liljegren-wbgt.md) gives the full sensitivity table.
@@ -361,7 +365,13 @@ The first two are deterministic: given the three exports in `data/raw/organiser/
 
 The fitted constants are tracked, not regenerated on each run, so a rerun cannot silently change them: [`config/solar_calibration.json`](config/solar_calibration.json) and [`config/forecast_correction.json`](config/forecast_correction.json), each with its held-out scores. Refit them with `python -m joto_guard calibrate-light` and `python -m joto_guard fit-correction` when more data arrives.
 
-Check the forecast against the station at the level a supervisor acts on, not just in degrees:
+Reconstruct the whole year: every working hour since 2016 from ERA5, through the same WBGT model, corrected towards the station. It writes `config/hot_season.json`:
+
+```bash
+python -m joto_guard hot-season
+```
+
+Check the forecast against the station at the level a supervisor acts on, not just in degrees. It writes `config/forecast_verification.json`:
 
 ```bash
 python -m joto_guard verify --past-forecasts data/reference/open_meteo_ecmwf_ifs_past_forecasts_2026-08-28_2026-09-15.json
@@ -371,4 +381,4 @@ python -m joto_guard verify --past-forecasts data/reference/open_meteo_ecmwf_ifs
 pytest && ruff check src tests bot && ruff format --check src tests bot
 ```
 
-352 tests, run on Python 3.11 and 3.13 in GitHub Actions on every push. They use fixtures cut from the real exports and never touch the network.
+365 tests, run on Python 3.11 and 3.13 in GitHub Actions on every push. They use fixtures cut from the real exports and never touch the network.

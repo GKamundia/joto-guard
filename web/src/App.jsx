@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { fetchForecast, fetchHeatGuidance, fetchStationHealth, fetchWbgt } from "./api";
+import {
+  fetchForecast,
+  fetchHeatGuidance,
+  fetchHotSeason,
+  fetchStationHealth,
+  fetchWbgt,
+} from "./api";
 import Audits from "./components/Audits";
 import ChannelStatus from "./components/ChannelStatus";
 import CoverageCalendar from "./components/CoverageCalendar";
@@ -8,6 +14,7 @@ import FirmwareCheck from "./components/FirmwareCheck";
 import ForecastPanel from "./components/ForecastPanel";
 import HealthTrend from "./components/HealthTrend";
 import HeatGuidance from "./components/HeatGuidance";
+import HotSeason from "./components/HotSeason";
 import Method from "./components/Method";
 import NowCard from "./components/NowCard";
 import Observations from "./components/Observations";
@@ -57,6 +64,7 @@ function useJotoData() {
     load("report", fetchStationHealth, true);
     load("wbgt", fetchWbgt, false);
     load("forecast", fetchForecast, false);
+    load("season", fetchHotSeason, false);
     return () => {
       current = false;
     };
@@ -147,7 +155,7 @@ function LoadingPage() {
 }
 
 export default function App() {
-  const { guidance, report, wbgt, forecast, failed, error } = useJotoData();
+  const { guidance, report, wbgt, forecast, season, failed, error } = useJotoData();
   const [dark, toggleTheme] = useTheme();
   const now = useNow();
   const [tab, setTab] = useState(() => knownTab(readHash().tab));
@@ -284,6 +292,7 @@ export default function App() {
               onDay={setDay}
               now={now}
             />
+            <HotSeason season={season} workType={workType} />
           </>
         ) : null}
 

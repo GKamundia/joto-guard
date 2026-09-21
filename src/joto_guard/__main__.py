@@ -19,7 +19,7 @@ from conduit_sentinel.audit import is_night
 from conduit_sentinel.config import load_config
 from conduit_sentinel.pipeline import csv_ready
 
-from . import bands, bias, verify
+from . import bands, bias, hot_season, verify
 from .forecast import (
     DEFAULT_MODEL,
     FORECAST_URL,
@@ -180,8 +180,34 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="Sentinel configuration, for the local time zone",
     )
     check.add_argument("--guidance", type=Path, default=Path("config/heat_guidance.yaml"))
-    check.add_argument("--out", type=Path, default=Path("data/processed/verification.json"))
+    check.add_argument("--out", type=Path, default=Path("config/forecast_verification.json"))
     check.set_defaults(handler=run_verify)
+
+    season = commands.add_parser(
+        "hot-season",
+        help="how often the heat limits are crossed in every month, not just the weeks on record",
+        description="Run the WBGT model on ERA5 for every hour since 2016 at the station's grid "
+        "cell, correct it towards the station, and count the working hours over each limit.",
+    )
+    season.add_argument(
+        "--processed", type=Path, default=Path("data/processed"), help=PROCESSED_HELP
+    )
+    season.add_argument("--start", default="2016-01-01")
+    season.add_argument("--end", default="2026-09-15")
+    season.add_argument(
+        "--payload",
+        type=Path,
+        help="a saved ERA5 response; fetched and saved to data/reference/ when not given",
+    )
+    season.add_argument(
+        "--config",
+        type=Path,
+        default=Path("config/qc_rules.yaml"),
+        help="Sentinel configuration, for the local time zone",
+    )
+    season.add_argument("--guidance", type=Path, default=Path("config/heat_guidance.yaml"))
+    season.add_argument("--out", type=Path, default=Path("config/hot_season.json"))
+    season.set_defaults(handler=run_hot_season)
 
     args = parser.parse_args(argv)
     try:
@@ -364,6 +390,53 @@ def _pairs_from(args: argparse.Namespace) -> tuple[pd.DataFrame, str, list[int]]
     leads = [day for day in range(8) if variable_name("temperature_2m", day) in payload["hourly"]]
     forecasts = {day: forecast_wbgt(payload, latitude, longitude, day) for day in leads}
     return bias.pair_forecasts(station, forecasts, timezone), timezone, leads
+
+
+def run_hot_season(args: argparse.Namespace) -> int:
+    report = json.loads((args.processed / "report.json").read_text(encoding="utf-8"))
+    station_info = report["station"]
+    latitude, longitude = station_info["latitude"], station_info["longitude"]
+    elevation = station_info["elevation_m"]
+    timezone = load_config(args.config).station.display_timezone
+
+    if args.payload:
+        payload = json.loads(args.payload.read_text(encoding="utf-8"))
+    else:
+        payload = hot_season.fetch(latitude, longitude, elevation, args.start, args.end)
+        saved = Path("data/reference") / hot_season.cache_name(args.start, args.end)
+        saved.parent.mkdir(parents=True, exist_ok=True)
+        saved.write_text(json.dumps(payload), encoding="utf-8")
+        print(f"Saved the ERA5 response to {saved}")
+
+    reanalysis = hot_season.hourly_wbgt(payload, latitude, longitude, timezone)
+    station = pd.read_csv(args.processed / "wbgt_hourly.csv")
+    station["hour_utc"] = pd.to_datetime(station["hour_utc"], utc=True)
+    offsets = hot_season.station_offsets(reanalysis, station)
+    guidance = bands.load_guidance(args.guidance)
+
+    summary = hot_season.summarise(reanalysis, offsets, guidance, datetime.now(UTC))
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    hot_season.save(summary, args.out)
+
+    print(
+        f"ERA5 {summary['years'][0]} to {summary['years'][1]}, "
+        f"{summary['n_working_hours']:,} working hours; it reads "
+        f"{-summary['reanalysis_minus_station_c']:g} degC cooler than the station"
+    )
+    print("Share of working hours over the new-worker limit, at least / likely:")
+    hot, record = summary["hot_season"], summary["record_season"]
+    for work_type in guidance.work_types:
+        figures = [
+            season[figure][work_type]["over_new_workers_pct"]
+            for season in (hot, record)
+            for figure in ("at_least", "likely")
+        ]
+        print(
+            f"  {work_type:11s} hot season {figures[0]:5.1f} / {figures[1]:5.1f} %   "
+            f"Aug-Sep {figures[2]:5.1f} / {figures[3]:5.1f} %"
+        )
+    print(f"Wrote {args.out}")
+    return 0
 
 
 def run_verify(args: argparse.Namespace) -> int:

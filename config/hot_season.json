@@ -1,0 +1,610 @@
+{
+  "generated_at_utc": "2026-09-21T09:15:20Z",
+  "source": "ERA5 reanalysis through Open-Meteo, at the station's grid cell",
+  "years": [
+    2016,
+    2026
+  ],
+  "working_hours": "07:00 to 18:00 local",
+  "reanalysis_minus_station_c": -2.12,
+  "hot_months": [
+    "Jan",
+    "Feb",
+    "Mar"
+  ],
+  "record_months": [
+    "Aug",
+    "Sep"
+  ],
+  "limits": {
+    "light": {
+      "acclimatized_c": 29.5,
+      "new_workers_c": 26.5
+    },
+    "moderate": {
+      "acclimatized_c": 27.5,
+      "new_workers_c": 24.0
+    },
+    "heavy": {
+      "acclimatized_c": 26.0,
+      "new_workers_c": 22.3
+    },
+    "very_heavy": {
+      "acclimatized_c": 24.9,
+      "new_workers_c": 20.9
+    }
+  },
+  "hot_season": {
+    "at_least": {
+      "light": {
+        "over_new_workers_pct": 2.5,
+        "over_acclimatized_pct": 0.2
+      },
+      "moderate": {
+        "over_new_workers_pct": 30.2,
+        "over_acclimatized_pct": 1.0
+      },
+      "heavy": {
+        "over_new_workers_pct": 63.3,
+        "over_acclimatized_pct": 4.6
+      },
+      "very_heavy": {
+        "over_new_workers_pct": 79.7,
+        "over_acclimatized_pct": 14.2
+      }
+    },
+    "likely": {
+      "light": {
+        "over_new_workers_pct": 34.0,
+        "over_acclimatized_pct": 1.6
+      },
+      "moderate": {
+        "over_new_workers_pct": 66.6,
+        "over_acclimatized_pct": 16.8
+      },
+      "heavy": {
+        "over_new_workers_pct": 80.4,
+        "over_acclimatized_pct": 42.6
+      },
+      "very_heavy": {
+        "over_new_workers_pct": 88.2,
+        "over_acclimatized_pct": 57.6
+      }
+    },
+    "n_working_hours": 10923
+  },
+  "record_season": {
+    "at_least": {
+      "light": {
+        "over_new_workers_pct": 0.5,
+        "over_acclimatized_pct": 0.0
+      },
+      "moderate": {
+        "over_new_workers_pct": 10.9,
+        "over_acclimatized_pct": 0.1
+      },
+      "heavy": {
+        "over_new_workers_pct": 31.4,
+        "over_acclimatized_pct": 1.0
+      },
+      "very_heavy": {
+        "over_new_workers_pct": 49.9,
+        "over_acclimatized_pct": 4.4
+      }
+    },
+    "likely": {
+      "light": {
+        "over_new_workers_pct": 12.6,
+        "over_acclimatized_pct": 0.3
+      },
+      "moderate": {
+        "over_new_workers_pct": 41.0,
+        "over_acclimatized_pct": 5.4
+      },
+      "heavy": {
+        "over_new_workers_pct": 60.7,
+        "over_acclimatized_pct": 17.3
+      },
+      "very_heavy": {
+        "over_new_workers_pct": 73.8,
+        "over_acclimatized_pct": 30.2
+      }
+    },
+    "n_working_hours": 7216
+  },
+  "by_month": [
+    {
+      "month": 1,
+      "name": "Jan",
+      "peak_wbgt_c": 29.6,
+      "at_least": {
+        "light": {
+          "over_new_workers_pct": 1.8,
+          "over_acclimatized_pct": 0.0
+        },
+        "moderate": {
+          "over_new_workers_pct": 22.2,
+          "over_acclimatized_pct": 0.7
+        },
+        "heavy": {
+          "over_new_workers_pct": 57.6,
+          "over_acclimatized_pct": 3.0
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 76.4,
+          "over_acclimatized_pct": 9.3
+        }
+      },
+      "likely": {
+        "light": {
+          "over_new_workers_pct": 27.0,
+          "over_acclimatized_pct": 1.2
+        },
+        "moderate": {
+          "over_new_workers_pct": 63.4,
+          "over_acclimatized_pct": 11.4
+        },
+        "heavy": {
+          "over_new_workers_pct": 77.9,
+          "over_acclimatized_pct": 35.9
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 87.0,
+          "over_acclimatized_pct": 52.5
+        }
+      }
+    },
+    {
+      "month": 2,
+      "name": "Feb",
+      "peak_wbgt_c": 30.1,
+      "at_least": {
+        "light": {
+          "over_new_workers_pct": 2.5,
+          "over_acclimatized_pct": 0.1
+        },
+        "moderate": {
+          "over_new_workers_pct": 28.8,
+          "over_acclimatized_pct": 1.0
+        },
+        "heavy": {
+          "over_new_workers_pct": 62.6,
+          "over_acclimatized_pct": 4.2
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 79.5,
+          "over_acclimatized_pct": 12.9
+        }
+      },
+      "likely": {
+        "light": {
+          "over_new_workers_pct": 32.7,
+          "over_acclimatized_pct": 1.6
+        },
+        "moderate": {
+          "over_new_workers_pct": 66.0,
+          "over_acclimatized_pct": 15.6
+        },
+        "heavy": {
+          "over_new_workers_pct": 80.2,
+          "over_acclimatized_pct": 41.8
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 87.8,
+          "over_acclimatized_pct": 56.9
+        }
+      }
+    },
+    {
+      "month": 3,
+      "name": "Mar",
+      "peak_wbgt_c": 30.2,
+      "at_least": {
+        "light": {
+          "over_new_workers_pct": 3.4,
+          "over_acclimatized_pct": 0.3
+        },
+        "moderate": {
+          "over_new_workers_pct": 39.4,
+          "over_acclimatized_pct": 1.1
+        },
+        "heavy": {
+          "over_new_workers_pct": 69.7,
+          "over_acclimatized_pct": 6.6
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 83.3,
+          "over_acclimatized_pct": 20.3
+        }
+      },
+      "likely": {
+        "light": {
+          "over_new_workers_pct": 42.1,
+          "over_acclimatized_pct": 2.1
+        },
+        "moderate": {
+          "over_new_workers_pct": 70.2,
+          "over_acclimatized_pct": 23.3
+        },
+        "heavy": {
+          "over_new_workers_pct": 83.0,
+          "over_acclimatized_pct": 50.0
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 89.6,
+          "over_acclimatized_pct": 63.3
+        }
+      }
+    },
+    {
+      "month": 4,
+      "name": "Apr",
+      "peak_wbgt_c": 30.3,
+      "at_least": {
+        "light": {
+          "over_new_workers_pct": 5.0,
+          "over_acclimatized_pct": 0.2
+        },
+        "moderate": {
+          "over_new_workers_pct": 42.4,
+          "over_acclimatized_pct": 1.5
+        },
+        "heavy": {
+          "over_new_workers_pct": 69.2,
+          "over_acclimatized_pct": 8.8
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 82.7,
+          "over_acclimatized_pct": 24.6
+        }
+      },
+      "likely": {
+        "light": {
+          "over_new_workers_pct": 43.3,
+          "over_acclimatized_pct": 3.1
+        },
+        "moderate": {
+          "over_new_workers_pct": 70.9,
+          "over_acclimatized_pct": 27.2
+        },
+        "heavy": {
+          "over_new_workers_pct": 82.8,
+          "over_acclimatized_pct": 50.3
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 89.4,
+          "over_acclimatized_pct": 64.1
+        }
+      }
+    },
+    {
+      "month": 5,
+      "name": "May",
+      "peak_wbgt_c": 29.6,
+      "at_least": {
+        "light": {
+          "over_new_workers_pct": 1.9,
+          "over_acclimatized_pct": 0.0
+        },
+        "moderate": {
+          "over_new_workers_pct": 28.3,
+          "over_acclimatized_pct": 0.7
+        },
+        "heavy": {
+          "over_new_workers_pct": 60.6,
+          "over_acclimatized_pct": 3.3
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 78.8,
+          "over_acclimatized_pct": 14.0
+        }
+      },
+      "likely": {
+        "light": {
+          "over_new_workers_pct": 30.4,
+          "over_acclimatized_pct": 1.2
+        },
+        "moderate": {
+          "over_new_workers_pct": 66.2,
+          "over_acclimatized_pct": 15.4
+        },
+        "heavy": {
+          "over_new_workers_pct": 80.1,
+          "over_acclimatized_pct": 38.5
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 88.4,
+          "over_acclimatized_pct": 55.7
+        }
+      }
+    },
+    {
+      "month": 6,
+      "name": "Jun",
+      "peak_wbgt_c": 28.4,
+      "at_least": {
+        "light": {
+          "over_new_workers_pct": 0.3,
+          "over_acclimatized_pct": 0.0
+        },
+        "moderate": {
+          "over_new_workers_pct": 8.7,
+          "over_acclimatized_pct": 0.0
+        },
+        "heavy": {
+          "over_new_workers_pct": 31.3,
+          "over_acclimatized_pct": 0.8
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 56.3,
+          "over_acclimatized_pct": 3.5
+        }
+      },
+      "likely": {
+        "light": {
+          "over_new_workers_pct": 10.2,
+          "over_acclimatized_pct": 0.1
+        },
+        "moderate": {
+          "over_new_workers_pct": 44.4,
+          "over_acclimatized_pct": 4.2
+        },
+        "heavy": {
+          "over_new_workers_pct": 66.3,
+          "over_acclimatized_pct": 15.2
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 79.2,
+          "over_acclimatized_pct": 30.0
+        }
+      }
+    },
+    {
+      "month": 7,
+      "name": "Jul",
+      "peak_wbgt_c": 27.8,
+      "at_least": {
+        "light": {
+          "over_new_workers_pct": 0.1,
+          "over_acclimatized_pct": 0.0
+        },
+        "moderate": {
+          "over_new_workers_pct": 3.7,
+          "over_acclimatized_pct": 0.1
+        },
+        "heavy": {
+          "over_new_workers_pct": 17.2,
+          "over_acclimatized_pct": 0.2
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 36.3,
+          "over_acclimatized_pct": 1.2
+        }
+      },
+      "likely": {
+        "light": {
+          "over_new_workers_pct": 4.7,
+          "over_acclimatized_pct": 0.1
+        },
+        "moderate": {
+          "over_new_workers_pct": 28.2,
+          "over_acclimatized_pct": 1.7
+        },
+        "heavy": {
+          "over_new_workers_pct": 51.3,
+          "over_acclimatized_pct": 7.8
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 68.7,
+          "over_acclimatized_pct": 17.1
+        }
+      }
+    },
+    {
+      "month": 8,
+      "name": "Aug",
+      "peak_wbgt_c": 28.3,
+      "at_least": {
+        "light": {
+          "over_new_workers_pct": 0.2,
+          "over_acclimatized_pct": 0.0
+        },
+        "moderate": {
+          "over_new_workers_pct": 6.3,
+          "over_acclimatized_pct": 0.1
+        },
+        "heavy": {
+          "over_new_workers_pct": 21.7,
+          "over_acclimatized_pct": 0.5
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 40.1,
+          "over_acclimatized_pct": 2.2
+        }
+      },
+      "likely": {
+        "light": {
+          "over_new_workers_pct": 7.3,
+          "over_acclimatized_pct": 0.1
+        },
+        "moderate": {
+          "over_new_workers_pct": 32.2,
+          "over_acclimatized_pct": 2.7
+        },
+        "heavy": {
+          "over_new_workers_pct": 53.6,
+          "over_acclimatized_pct": 10.3
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 68.7,
+          "over_acclimatized_pct": 21.6
+        }
+      }
+    },
+    {
+      "month": 9,
+      "name": "Sep",
+      "peak_wbgt_c": 29.0,
+      "at_least": {
+        "light": {
+          "over_new_workers_pct": 0.9,
+          "over_acclimatized_pct": 0.0
+        },
+        "moderate": {
+          "over_new_workers_pct": 15.8,
+          "over_acclimatized_pct": 0.1
+        },
+        "heavy": {
+          "over_new_workers_pct": 41.8,
+          "over_acclimatized_pct": 1.5
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 60.5,
+          "over_acclimatized_pct": 6.8
+        }
+      },
+      "likely": {
+        "light": {
+          "over_new_workers_pct": 18.2,
+          "over_acclimatized_pct": 0.5
+        },
+        "moderate": {
+          "over_new_workers_pct": 50.4,
+          "over_acclimatized_pct": 8.3
+        },
+        "heavy": {
+          "over_new_workers_pct": 68.4,
+          "over_acclimatized_pct": 24.9
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 79.4,
+          "over_acclimatized_pct": 39.6
+        }
+      }
+    },
+    {
+      "month": 10,
+      "name": "Oct",
+      "peak_wbgt_c": 29.0,
+      "at_least": {
+        "light": {
+          "over_new_workers_pct": 1.0,
+          "over_acclimatized_pct": 0.0
+        },
+        "moderate": {
+          "over_new_workers_pct": 25.2,
+          "over_acclimatized_pct": 0.1
+        },
+        "heavy": {
+          "over_new_workers_pct": 57.5,
+          "over_acclimatized_pct": 2.2
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 74.1,
+          "over_acclimatized_pct": 10.7
+        }
+      },
+      "likely": {
+        "light": {
+          "over_new_workers_pct": 28.0,
+          "over_acclimatized_pct": 0.4
+        },
+        "moderate": {
+          "over_new_workers_pct": 64.4,
+          "over_acclimatized_pct": 11.9
+        },
+        "heavy": {
+          "over_new_workers_pct": 76.4,
+          "over_acclimatized_pct": 37.3
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 86.0,
+          "over_acclimatized_pct": 53.3
+        }
+      }
+    },
+    {
+      "month": 11,
+      "name": "Nov",
+      "peak_wbgt_c": 28.6,
+      "at_least": {
+        "light": {
+          "over_new_workers_pct": 0.2,
+          "over_acclimatized_pct": 0.0
+        },
+        "moderate": {
+          "over_new_workers_pct": 18.5,
+          "over_acclimatized_pct": 0.0
+        },
+        "heavy": {
+          "over_new_workers_pct": 51.8,
+          "over_acclimatized_pct": 0.9
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 70.8,
+          "over_acclimatized_pct": 6.8
+        }
+      },
+      "likely": {
+        "light": {
+          "over_new_workers_pct": 22.5,
+          "over_acclimatized_pct": 0.1
+        },
+        "moderate": {
+          "over_new_workers_pct": 60.2,
+          "over_acclimatized_pct": 8.1
+        },
+        "heavy": {
+          "over_new_workers_pct": 74.1,
+          "over_acclimatized_pct": 31.4
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 85.6,
+          "over_acclimatized_pct": 48.0
+        }
+      }
+    },
+    {
+      "month": 12,
+      "name": "Dec",
+      "peak_wbgt_c": 29.1,
+      "at_least": {
+        "light": {
+          "over_new_workers_pct": 1.0,
+          "over_acclimatized_pct": 0.1
+        },
+        "moderate": {
+          "over_new_workers_pct": 15.5,
+          "over_acclimatized_pct": 0.4
+        },
+        "heavy": {
+          "over_new_workers_pct": 52.8,
+          "over_acclimatized_pct": 1.3
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 73.9,
+          "over_acclimatized_pct": 5.0
+        }
+      },
+      "likely": {
+        "light": {
+          "over_new_workers_pct": 20.2,
+          "over_acclimatized_pct": 0.7
+        },
+        "moderate": {
+          "over_new_workers_pct": 61.3,
+          "over_acclimatized_pct": 6.2
+        },
+        "heavy": {
+          "over_new_workers_pct": 75.4,
+          "over_acclimatized_pct": 30.4
+        },
+        "very_heavy": {
+          "over_new_workers_pct": 87.0,
+          "over_acclimatized_pct": 49.3
+        }
+      }
+    }
+  ],
+  "n_working_hours": 43021
+}

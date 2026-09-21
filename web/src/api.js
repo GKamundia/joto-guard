@@ -24,6 +24,8 @@ export const fetchWbgt = (days = 30) => get(`/v1/wbgt?days=${days}`);
 
 export const fetchForecast = () => get("/v1/forecast");
 
+export const fetchHotSeason = () => get("/v1/hot-season");
+
 export const datasetUrl = (name) => `${BASE}/v1/dataset/${name}`;
 
 export const apiDocsUrl = `${BASE}/docs`;

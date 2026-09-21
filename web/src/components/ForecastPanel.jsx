@@ -148,6 +148,8 @@ export default function ForecastPanel({ forecast, failure, guidance, workType })
         </p>
       </section>
 
+      {forecast.verification ? <LevelCheck verification={forecast.verification} /> : null}
+
       <section className="card">
         <h2>The weather behind the index</h2>
         <p className="lead">
@@ -174,5 +176,70 @@ export default function ForecastPanel({ forecast, failure, guidance, workType })
         />
       </section>
     </>
+  );
+}
+
+const LEVEL_WORK_NAMES = {
+  light: "Light work",
+  moderate: "Moderate work",
+  heavy: "Heavy work",
+  very_heavy: "Very heavy work",
+};
+
+/**
+ * Degrees of error say nothing about the decision a supervisor makes. This says how often
+ * the level the forecast implied was the level the station turned out to justify, and in
+ * particular how often it said an hour was safer than it was: the error that can hurt
+ * somebody.
+ */
+function LevelCheck({ verification }) {
+  const rows = Object.entries(verification.levels ?? {});
+  const top = verification.levels_from_band_top ?? {};
+  const heavy = verification.levels?.heavy;
+
+  return (
+    <section className="card">
+      <h2>Does it get the level right?</h2>
+      <p className="lead">
+        Scored on {verification.n_hours?.toLocaleString("en-GB")} hours over{" "}
+        {verification.n_days} days, each day left out of the fit, for forecasts made up to three
+        days ahead. Being a degree out matters next to a limit and not at all in the middle of a
+        band, so this counts decisions, not degrees.
+      </p>
+      <table className="grid">
+        <thead>
+          <tr>
+            <th>Work</th>
+            <th>Level right</th>
+            <th>Said safer than it was</th>
+            <th>Said worse than it was</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(([work, row]) => (
+            <tr key={work}>
+              <th scope="row">{LEVEL_WORK_NAMES[work] ?? work}</th>
+              <td>{number(row.exact_pct, 1)} %</td>
+              <td className={row.under_warned_pct >= 5 ? "warn" : ""}>
+                {number(row.under_warned_pct, 1)} %
+              </td>
+              <td>{number(row.over_warned_pct, 1)} %</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {heavy ? (
+        <p className="lead" style={{ marginTop: "0.7rem", marginBottom: 0 }}>
+          The two errors are not equal. Saying an hour is worse than it was costs some work; saying
+          it is safer than it was is the one that can hurt somebody, and for heavy work it happens
+          on about one hour in {Math.round(100 / Math.max(heavy.under_warned_pct, 0.1))}. Planning
+          from the top of the band instead would cut that to{" "}
+          {number(top.heavy?.under_warned_pct, 1)} %, but would call{" "}
+          {number(top.heavy?.over_warned_pct, 0)} % of hours worse than they were, and a warning
+          that cries wolf one hour in five stops being read. That is why the level shown is the
+          central one and the band's top is marked separately, as "could reach the next level".
+        </p>
+      ) : null}
+    </section>
   );
 }
