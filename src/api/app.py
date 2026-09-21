@@ -56,7 +56,13 @@ FORECAST_COLUMNS = [
     "wbgt_low_c",
     "wbgt_high_c",
 ]
-DEFAULT_ORIGINS = ("http://localhost:5173", "http://127.0.0.1:5173")
+# Vite moves to the next port when 5173 is taken, so a second dev server lands on 5174.
+DEFAULT_ORIGINS = (
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+)
 
 UNITS = {column.name: column.unit for column in VARIABLE_COLUMNS}
 

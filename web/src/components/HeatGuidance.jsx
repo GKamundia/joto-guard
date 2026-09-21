@@ -11,8 +11,8 @@ const WORK_NAMES = {
 
 const LEVEL_NAMES = {
   normal: "Normal",
-  acclimatized_only: "Acclimatized only",
-  work_rest: "Work/rest",
+  acclimatized_only: "Breaks for new workers",
+  work_rest: "Breaks for everyone",
   reschedule: "Reschedule",
 };
 

@@ -1574,3 +1574,13 @@ td.warn {
   color: var(--bad);
   font-weight: 700;
 }
+
+.now-who {
+  margin: 0.6rem 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.now-who strong {
+  color: var(--ink-soft);
+}

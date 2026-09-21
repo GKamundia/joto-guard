@@ -33,11 +33,17 @@ export function nextSpell(hours, workType, from = Date.now()) {
   // `until` is the last hour in the spell; `endsAt` is the hour after it, which is when the
   // spell is over. Saying "11:00 to 17:00" and "until 17:00" means the same six hours, where
   // "to 16:00" beside "until 17:00" reads as a contradiction.
+  const order = ["normal", "acclimatized_only", "work_rest", "reschedule"];
+  const worst = ahead
+    .slice(start, end + 1)
+    .map((hour) => hour.by_work_type[workType].level)
+    .reduce((a, b) => (order.indexOf(b) > order.indexOf(a) ? b : a));
   return {
     from: ahead[start],
     until: ahead[end],
     endsAt: ahead[end + 1] ?? null,
     hours: end - start + 1,
+    worst,
   };
 }
 

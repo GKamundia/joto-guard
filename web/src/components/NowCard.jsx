@@ -3,8 +3,8 @@ import { currentHour, easesAt, nextSpell, reach } from "../guidance";
 
 const LEVEL_NAMES = {
   normal: "Normal",
-  acclimatized_only: "Acclimatized only",
-  work_rest: "Work/rest",
+  acclimatized_only: "Breaks for new workers",
+  work_rest: "Breaks for everyone",
   reschedule: "Reschedule",
 };
 
@@ -120,6 +120,11 @@ export default function NowCard({ guidance, workType, now = Date.now() }) {
         </dl>
       </div>
 
+      <p className="now-who">
+        <strong>New workers</strong> are people new to working in the heat, or back after a week
+        or more away. Most of a crew that works outdoors here every day is used to the heat.
+      </p>
+
       <p className="now-next">
         {spell ? (
           <>
@@ -127,9 +132,8 @@ export default function NowCard({ guidance, workType, now = Date.now() }) {
             <strong>
               {spell.endsAt ? hourOfDay(spell.endsAt.local_time) : "the end of the forecast"}
             </strong>{" "}
-            on {dayLabel(spell.from.local_time)}, {spell.hours} hour
-            {spell.hours === 1 ? "" : "s"} at{" "}
-            {LEVEL_NAMES[spell.from.by_work_type[workType].level].toLowerCase()} or worse.
+            on {dayLabel(spell.from.local_time)} ({spell.hours} hour
+            {spell.hours === 1 ? "" : "s"}). At worst: {LEVEL_NAMES[spell.worst].toLowerCase()}.
           </>
         ) : (
           <>Nothing above normal in the rest of the forecast for this work.</>
